@@ -40,6 +40,8 @@ machine(MachineType:Directory, "AMD Baseline protocol")
   int TCC_select_num_bits;
   bool useL3OnWT := "False";
   bool L2isWB;
+  //earlyData parameter
+  bool earlyData := "False";
   Cycles to_memory_controller_latency := 1;
 
   // DMA
@@ -157,12 +159,13 @@ machine(MachineType:Directory, "AMD Baseline protocol")
     bool Cached,        desc="data hit in Cache";
     bool MemData,       desc="Got MemData?",default="false";
     bool wtData,       desc="Got write through data?",default="false";
-    // earlyResp
+    // earlyResp begin
     bool canEarlyResp,       desc="Can respond early safely",default="false";
     bool canEarlyRespS,       desc="Can respond early safely",default="false";
     bool canEarlyRespM,       desc="Can respond early safely",default="false";
     bool readyToResp,       desc="Received dirty probe data",default="false";
     bool responded,       desc="Got dirty probe with data",default="false";
+    // earlyResp end
     bool atomicData,   desc="Got Atomic op?",default="false";
     // Note, protocol invariant: atomicData = atomicDataReturn || atomicDataNoReturn;
     bool atomicDataReturn, desc="Got Atomic op and need return value?",default="false";
@@ -457,10 +460,11 @@ machine(MachineType:Directory, "AMD Baseline protocol")
     }
   }
 
-  // earlyData
+  // earlyData, don't need to change it since if it was not responded
+  // because the option is disabled it will follow the normal path
   action(s_sendResponseS, "s", desc="send Shared response") {
     if(!tbe.responded) {
-      DPRINTF(OPT, "NotEarly: Responding to RdBlkS\n");
+      DPRINTF(OPT1, "NotEarly: Responding to RdBlkS\n");
       enqueue(responseNetwork_out, ResponseMsg, response_latency) {
         out_msg.addr := address;
         out_msg.Type := CoherenceResponseType:NBSysResp;
@@ -488,7 +492,7 @@ machine(MachineType:Directory, "AMD Baseline protocol")
   // earlyData
   action(es_sendResponseES, "es", desc="send Exclusive or Shared response") {
     if(!tbe.responded) {
-      DPRINTF(OPT, "NotEarly: Responding to RdBlk\n");
+      DPRINTF(OPT1, "NotEarly: Responding to RdBlk\n");
       enqueue(responseNetwork_out, ResponseMsg, response_latency) {
         out_msg.addr := address;
         out_msg.Type := CoherenceResponseType:NBSysResp;
@@ -523,7 +527,7 @@ machine(MachineType:Directory, "AMD Baseline protocol")
   // earlyData
   action(m_sendResponseM, "m", desc="send Modified response") {
     if(!tbe.responded) {
-      DPRINTF(OPT, "NotEarly: Responding to RdBlkM\n");
+      // DPRINTF(OPT1, "NotEarly: Responding to RdBlkM\n");
       if (tbe.wtData) {
         enqueue(triggerQueue_out, TriggerMsg, 1) {
           out_msg.addr := address;
@@ -1088,7 +1092,11 @@ machine(MachineType:Directory, "AMD Baseline protocol")
       tbe.isGLCSet := in_msg.isGLCSet;
       tbe.isSLCSet := in_msg.isSLCSet;
       DPRINTF(RubySlicc, "t_allocateTBE in_msg: %s, tbe: %s\n", in_msg, tbe.CURequestor);
-    if (in_msg.Type == CoherenceRequestType:WriteThrough ||
+    
+    // earlyData TBE modifications
+    if(earlyData)
+    {
+      if (in_msg.Type == CoherenceRequestType:WriteThrough ||
          in_msg.Type == CoherenceRequestType:Atomic ||
          in_msg.Type == CoherenceRequestType:AtomicReturn ||
          in_msg.Type == CoherenceRequestType:AtomicNoReturn ||
@@ -1103,6 +1111,8 @@ machine(MachineType:Directory, "AMD Baseline protocol")
       }
       tbe.responded := false;
       tbe.readyToResp := false;
+    // earlyData TBE modifications
+    }
    }
   }
 
@@ -1115,13 +1125,8 @@ machine(MachineType:Directory, "AMD Baseline protocol")
     if (tbe.wtData || tbe.atomicData || tbe.Dirty == false) {
       // Only perform atomics in the directory if the SLC bit is set, or
       // if the L2 is WT
-      // earlyData
+      // earlyData Modification
       if(!tbe.responded) { 
-        /* it is important to only do this when the requesting-core hasn't
-         * already been responded to so as not to repeat the operation twice
-         * which in some ATOMIC_RETURN cases could duplicate a log entry
-         * leading to problems when processing the response packets at the GPUColaescer
-         */
         if (tbe.atomicData && (tbe.isSLCSet || !L2isWB)) {
           if (tbe.atomicDataReturn) {
             tbe.DataBlk.atomicPartial(tbe.DataBlk, tbe.writeMask, false);
@@ -1162,8 +1167,8 @@ machine(MachineType:Directory, "AMD Baseline protocol")
   action(y_writeProbeDataToTBE, "y", desc="write Probe Data to TBE") {
     peek(responseNetwork_in, ResponseMsg) {
       if (in_msg.Dirty) {
-        // earlyData
-        if(tbe.canEarlyResp || tbe.canEarlyRespS || tbe.canEarlyRespM) {
+        // earlyData if  
+        if(earlyData && (tbe.canEarlyResp || tbe.canEarlyRespS || tbe.canEarlyRespM)) {
           tbe.readyToResp := true;
         }
         if (tbe.wtData) {
@@ -1174,7 +1179,7 @@ machine(MachineType:Directory, "AMD Baseline protocol")
         } else if (tbe.Dirty) {
           // earlyData
           if(tbe.atomicData == false && tbe.wtData == false) {
-            // assert(tbe.atomicDataReturn == false && tbe.atomicDataNoReturn == false);
+            assert(tbe.atomicDataReturn == false && tbe.atomicDataNoReturn == false);
             DPRINTF(RubySlicc, "Got double data for %s from %s\n", address, in_msg.Sender);
             assert(tbe.DataBlk == in_msg.DataBlk);  // in case of double data
           }
@@ -1190,36 +1195,83 @@ machine(MachineType:Directory, "AMD Baseline protocol")
     }
   }
 
-  // earlyData
+  // earlyData main change for responding
   action(edc_earlyDataToCore, "edc", desc="early data to core") {
-          if(tbe.readyToResp && !tbe.responded) {
-        DPRINTF(OPT, "Early: tbe.TBEState %s\n", tbe.TBEState);
-        if (tbe.canEarlyRespS) {
-          DPRINTF(OPT1, "Early: Responding to RdBlkS at %d probes\n", tbe.NumPendingAcks);
-          enqueue(responseNetwork_out, ResponseMsg, response_latency) {
-            out_msg.addr := address;
-            out_msg.Type := CoherenceResponseType:NBSysResp;
-            if (tbe.L3Hit) {
-              out_msg.Sender := createMachineID(MachineType:L3Cache, intToID(0));
-            } else {
-              out_msg.Sender := machineID;
-            }
-            out_msg.Destination.add(tbe.OriginalRequestor);
-            out_msg.DataBlk := tbe.DataBlk;
-            out_msg.MessageSize := MessageSizeType:Response_Data;
-            out_msg.Dirty := false;
-            out_msg.State := CoherenceState:Shared;
-            out_msg.InitialRequestTime := tbe.InitialRequestTime;
-            out_msg.ForwardRequestTime := tbe.ForwardRequestTime;
-            out_msg.ProbeRequestStartTime := tbe.ProbeRequestStartTime;
-            out_msg.OriginalResponder := tbe.LastSender;
-            out_msg.L3Hit := tbe.L3Hit;
-            out_msg.CURequestor := tbe.CURequestor;
-            DPRINTF(RubySlicc, "%s\n", out_msg);
+    if(earlyData && tbe.readyToResp && !tbe.responded) {
+      DPRINTF(OPT1, "Early: tbe.TBEState %s\n", tbe.TBEState);
+      if (tbe.canEarlyRespS) {
+        DPRINTF(OPT1, "Early: Responding to RdBlkS at %d probes\n", tbe.NumPendingAcks);
+        enqueue(responseNetwork_out, ResponseMsg, response_latency) {
+          out_msg.addr := address;
+          out_msg.Type := CoherenceResponseType:NBSysResp;
+          if (tbe.L3Hit) {
+            out_msg.Sender := createMachineID(MachineType:L3Cache, intToID(0));
+          } else {
+            out_msg.Sender := machineID;
           }
-          tbe.responded := true;
-        } else if (tbe.canEarlyResp) {
-          DPRINTF(OPT, "Early: Responding to RdBlk at %d probes\n", tbe.NumPendingAcks);
+          out_msg.Destination.add(tbe.OriginalRequestor);
+          out_msg.DataBlk := tbe.DataBlk;
+          out_msg.MessageSize := MessageSizeType:Response_Data;
+          out_msg.Dirty := false;
+          out_msg.State := CoherenceState:Shared;
+          out_msg.InitialRequestTime := tbe.InitialRequestTime;
+          out_msg.ForwardRequestTime := tbe.ForwardRequestTime;
+          out_msg.ProbeRequestStartTime := tbe.ProbeRequestStartTime;
+          out_msg.OriginalResponder := tbe.LastSender;
+          out_msg.L3Hit := tbe.L3Hit;
+          out_msg.CURequestor := tbe.CURequestor;
+          DPRINTF(RubySlicc, "%s\n", out_msg);
+        }
+        tbe.responded := true;
+      } else if (tbe.canEarlyResp) {
+        DPRINTF(OPT1, "Early: Responding to RdBlk at %d probes\n", tbe.NumPendingAcks);
+        enqueue(responseNetwork_out, ResponseMsg, response_latency) {
+          out_msg.addr := address;
+          out_msg.Type := CoherenceResponseType:NBSysResp;
+          if (tbe.L3Hit) {
+            out_msg.Sender := createMachineID(MachineType:L3Cache, intToID(0));
+          } else {
+            out_msg.Sender := machineID;
+          }
+          out_msg.Destination.add(tbe.OriginalRequestor);
+          out_msg.DataBlk := tbe.DataBlk;
+          out_msg.MessageSize := MessageSizeType:Response_Data;
+          out_msg.Dirty := tbe.Dirty;
+          // this is ignored by GPU
+          if (tbe.Cached) {
+            out_msg.State := CoherenceState:Shared;
+          } else {
+            out_msg.State := CoherenceState:Exclusive;
+          }
+          out_msg.InitialRequestTime := tbe.InitialRequestTime;
+          out_msg.ForwardRequestTime := tbe.ForwardRequestTime;
+          out_msg.ProbeRequestStartTime := tbe.ProbeRequestStartTime;
+          out_msg.OriginalResponder := tbe.LastSender;
+          out_msg.L3Hit := tbe.L3Hit;
+          out_msg.isGLCSet := tbe.isGLCSet;
+          out_msg.isSLCSet := tbe.isSLCSet;
+          out_msg.CURequestor := tbe.CURequestor;
+          DPRINTF(RubySlicc, "%s\n", out_msg);
+        }
+        tbe.responded := true;
+      } else if (tbe.canEarlyRespM) {
+        if (tbe.wtData) {
+          enqueue(triggerQueue_out, TriggerMsg, 1) {
+            out_msg.addr := address;
+            out_msg.Type := TriggerType:UnblockWriteThrough;
+          }
+        } else {
+          // this is a necessary event that will be applied in the non-early path
+          // so now, we replicate it here for the early path
+          // and elide it in the non-early path if it has already been applied
+          if (tbe.atomicData && (tbe.isSLCSet || !L2isWB)) {
+            if (tbe.atomicDataReturn) {
+              tbe.DataBlk.atomicPartial(tbe.DataBlk, tbe.writeMask, false);
+            } else {
+              assert(tbe.atomicDataNoReturn);
+              tbe.DataBlk.atomicPartial(tbe.DataBlk, tbe.writeMask, true);
+            }
+          }
           enqueue(responseNetwork_out, ResponseMsg, response_latency) {
             out_msg.addr := address;
             out_msg.Type := CoherenceResponseType:NBSysResp;
@@ -1232,79 +1284,32 @@ machine(MachineType:Directory, "AMD Baseline protocol")
             out_msg.DataBlk := tbe.DataBlk;
             out_msg.MessageSize := MessageSizeType:Response_Data;
             out_msg.Dirty := tbe.Dirty;
-            // this is ignored by GPU
-            if (tbe.Cached) {
-              out_msg.State := CoherenceState:Shared;
-            } else {
-              out_msg.State := CoherenceState:Exclusive;
-            }
+            out_msg.State := CoherenceState:Modified;
+            out_msg.CtoD := false;
             out_msg.InitialRequestTime := tbe.InitialRequestTime;
             out_msg.ForwardRequestTime := tbe.ForwardRequestTime;
             out_msg.ProbeRequestStartTime := tbe.ProbeRequestStartTime;
             out_msg.OriginalResponder := tbe.LastSender;
-            out_msg.L3Hit := tbe.L3Hit;
             out_msg.isGLCSet := tbe.isGLCSet;
             out_msg.isSLCSet := tbe.isSLCSet;
-            out_msg.CURequestor := tbe.CURequestor;
+            if(tbe.atomicData){
+              out_msg.CURequestor := tbe.CURequestor;
+            }
+            out_msg.L3Hit := tbe.L3Hit;
             DPRINTF(RubySlicc, "%s\n", out_msg);
           }
-          tbe.responded := true;
-        } else if (tbe.canEarlyRespM) {
-          if (tbe.wtData) {
+          if (tbe.atomicData) {
             enqueue(triggerQueue_out, TriggerMsg, 1) {
               out_msg.addr := address;
               out_msg.Type := TriggerType:UnblockWriteThrough;
             }
-          } else {
-            // this is a necessary event that will be applied in the non-early path
-            // so now, we replicate it here for the early path
-            // and elide it in the non-early path if it has already been applied
-            if (tbe.atomicData && (tbe.isSLCSet || !L2isWB)) {
-              if (tbe.atomicDataReturn) {
-                tbe.DataBlk.atomicPartial(tbe.DataBlk, tbe.writeMask, false);
-              } else {
-                assert(tbe.atomicDataNoReturn);
-                tbe.DataBlk.atomicPartial(tbe.DataBlk, tbe.writeMask, true);
-              }
-            }
-            enqueue(responseNetwork_out, ResponseMsg, response_latency) {
-              out_msg.addr := address;
-              out_msg.Type := CoherenceResponseType:NBSysResp;
-              if (tbe.L3Hit) {
-                out_msg.Sender := createMachineID(MachineType:L3Cache, intToID(0));
-              } else {
-                out_msg.Sender := machineID;
-              }
-              out_msg.Destination.add(tbe.OriginalRequestor);
-              out_msg.DataBlk := tbe.DataBlk;
-              out_msg.MessageSize := MessageSizeType:Response_Data;
-              out_msg.Dirty := tbe.Dirty;
-              out_msg.State := CoherenceState:Modified;
-              out_msg.CtoD := false;
-              out_msg.InitialRequestTime := tbe.InitialRequestTime;
-              out_msg.ForwardRequestTime := tbe.ForwardRequestTime;
-              out_msg.ProbeRequestStartTime := tbe.ProbeRequestStartTime;
-              out_msg.OriginalResponder := tbe.LastSender;
-              out_msg.isGLCSet := tbe.isGLCSet;
-              out_msg.isSLCSet := tbe.isSLCSet;
-              if(tbe.atomicData){
-                out_msg.CURequestor := tbe.CURequestor;
-              }
-              out_msg.L3Hit := tbe.L3Hit;
-              DPRINTF(RubySlicc, "%s\n", out_msg);
-            }
-            if (tbe.atomicData) {
-              enqueue(triggerQueue_out, TriggerMsg, 1) {
-                out_msg.addr := address;
-                out_msg.Type := TriggerType:UnblockWriteThrough;
-              }
-            }
           }
-          tbe.responded := true;
         }
-      } else {
-        DPRINTF(OPT, "EDC NA\n");
+        tbe.responded := true;
       }
+    } else {
+      DPRINTF(OPT1, "EDC NA\n");
+    }
  }
 
   action(mwc_markSinkWriteCancel, "mwc", desc="Mark to sink impending VicDirty") {
@@ -1448,11 +1453,12 @@ machine(MachineType:Directory, "AMD Baseline protocol")
     responseNetwork_in.recycle(clockEdge(), cyclesToTicks(recycle_latency));
   }
 
-  // earlyData
+  // earlyData action
   action(str_stallAndWaitRequest, "str", desc="Stall and wait on the address") {
     stall_and_wait(triggerQueue_in, address);
   }
 
+  // earlyData action
   action(su_stallAndWaitRequest, "su", desc="Stall and wait on the address") {
     stall_and_wait(unblockNetwork_in, address);
   }
@@ -1465,6 +1471,7 @@ machine(MachineType:Directory, "AMD Baseline protocol")
     stall_and_wait(dmaRequestQueue_in, address);
   }
 
+  // earlyData action
   action(waub_wakeUpUnblockBuffer, "waub", desc="Wake up any stalled CoreUnblocks") {
     wakeUpAllBuffers(address);
   }
@@ -1494,18 +1501,19 @@ machine(MachineType:Directory, "AMD Baseline protocol")
   */
 
   // TRANSITIONS
-  transition({BL, BDR_M, BDW_M, BS_M, BM_M, B_M, BDR_PM, BDW_PM, BS_PM, BM_PM, B_PM, BDR_Pm, BDW_Pm, BS_Pm, BM_Pm, B_Pm, B}, {RdBlkS, RdBlkM, RdBlk, CtoD}) {
+  // earlyData doesn't use BP, but since we different optimizations have to coexist we have to include it
+  transition({BL, BDR_M, BDW_M, BS_M, BM_M, B_M, BP BDR_PM, BDW_PM, BS_PM, BM_PM, B_PM, BDR_Pm, BDW_Pm, BS_Pm, BM_Pm, B_Pm, B}, {RdBlkS, RdBlkM, RdBlk, CtoD}) {
       st_stallAndWaitRequest;
   }
 
   // It may be possible to save multiple invalidations here!
-  transition({BL, BS_M, BM_M, B_M, BS_PM, BM_PM, B_PM, BS_Pm, BM_Pm, B_Pm, B}, {Atomic, WriteThrough}) {
+  transition({BL, BS_M, BM_M, B_M, BP, BS_PM, BM_PM, B_PM, BS_Pm, BM_Pm, B_Pm, B}, {Atomic, WriteThrough}) {
       st_stallAndWaitRequest;
   }
 
   // The exit state is always going to be U, so wakeUpDependents logic should be covered in all the
   // transitions which are flowing into U.
-  transition({BL, BDR_M, BDW_M, BS_M, BM_M, B_M, BDR_PM, BDW_PM, BS_PM, BM_PM, B_PM, BDR_Pm, BDW_Pm, BS_Pm, BM_Pm, B_Pm, B}, {DmaRead,DmaWrite}){
+  transition({BL, BDR_M, BDW_M, BS_M, BM_M, B_M, BP, BDR_PM, BDW_PM, BS_PM, BM_PM, B_PM, BDR_Pm, BDW_Pm, BS_Pm, BM_Pm, B_Pm, B}, {DmaRead,DmaWrite}){
     sd_stallAndWaitRequest;
   }
 
@@ -1609,7 +1617,7 @@ machine(MachineType:Directory, "AMD Baseline protocol")
     pr_popResponseQueue;
   }
 
-  transition({B, BDR_M, BDW_M, BS_M, BM_M, B_M, BDR_PM, BDW_PM, BS_PM, BM_PM, B_PM, BDR_Pm, BDW_Pm, BS_Pm, BM_Pm, B_Pm}, {VicDirty, VicClean}) {
+  transition({B, BDR_M, BDW_M, BS_M, BM_M, B_M, BP, BDR_PM, BDW_PM, BS_PM, BM_PM, B_PM, BDR_Pm, BDW_Pm, BS_Pm, BM_Pm, B_Pm}, {VicDirty, VicClean}) {
     st_stallAndWaitRequest;
   }
 
@@ -1629,11 +1637,11 @@ machine(MachineType:Directory, "AMD Baseline protocol")
     su_stallAndWaitRequest;
   }
 
-  transition({U, BL, BDR_M, BDW_M, BS_M, BM_M, B_M, BDR_PM, BDW_PM, BS_PM, BM_PM, B_PM, BDR_Pm, BDW_Pm, BS_Pm, BM_Pm, B_Pm, B}, WBAck) {
+  transition({U, BL, BDR_M, BDW_M, BS_M, BM_M, B_M, BP, BDR_PM, BDW_PM, BS_PM, BM_PM, B_PM, BDR_Pm, BDW_Pm, BS_Pm, BM_Pm, B_Pm, B}, WBAck) {
     pm_popMemQueue;
   }
 
-  transition({U, BL, BDR_M, BDW_M, BS_M, BM_M, B_M, BDR_PM, BDW_PM, BS_PM, BM_PM, B_PM, BDR_Pm, BDW_Pm, BS_Pm, BM_Pm, B_Pm, B}, StaleVicDirty) {
+  transition({U, BL, BDR_M, BDW_M, BS_M, BM_M, B_M, BP, BDR_PM, BDW_PM, BS_PM, BM_PM, B_PM, BDR_Pm, BDW_Pm, BS_Pm, BM_Pm, B_Pm, B}, StaleVicDirty) {
     rv_removeVicDirtyIgnore;
     w_sendResponseWBAck;
     p_popRequestQueue;
@@ -1718,7 +1726,7 @@ machine(MachineType:Directory, "AMD Baseline protocol")
     alwt_allocateL3BlockOnWT;
     dt_deallocateTBE;
     pm_popMemQueue;
-	waub_wakeUpUnblockBuffer;
+	  waub_wakeUpUnblockBuffer;
   }
 
   transition(BM_M, MemData, B){L3TagArrayWrite, L3DataArrayWrite} {
@@ -1770,7 +1778,7 @@ machine(MachineType:Directory, "AMD Baseline protocol")
 
   transition({BDR_PM, BDW_PM, BS_PM, BM_PM, B_PM, BDR_Pm, BDW_Pm, BS_Pm, BM_Pm, B_Pm}, CPUPrbResp) {
     y_writeProbeDataToTBE;
-    // earlyData
+    // earlyData action, not used if not specified with earlyData bool
     edc_earlyDataToCore;
     x_decrementAcks;
     o_checkForCompletion;
@@ -1846,17 +1854,17 @@ machine(MachineType:Directory, "AMD Baseline protocol")
     alwt_allocateL3BlockOnWT;
     dt_deallocateTBE;
     pt_popTriggerQueue;
-	waub_wakeUpUnblockBuffer;
+	  waub_wakeUpUnblockBuffer;
   }
 
-  //transition(BP, ProbeAcksComplete, B){L3TagArrayWrite, L3TagArrayWrite} {
-  //  sf_setForwardReqTime;
-  //  wd_writeBackData;
-  //  c_sendResponseCtoD;
-  //  alwt_allocateL3BlockOnWT;
-  //  dt_deallocateTBE;
-  //  pt_popTriggerQueue;
-  //}
+  transition(BP, ProbeAcksComplete, B){L3TagArrayWrite, L3TagArrayWrite} {
+    sf_setForwardReqTime;
+    wd_writeBackData;
+    c_sendResponseCtoD;
+    alwt_allocateL3BlockOnWT;
+    dt_deallocateTBE;
+    pt_popTriggerQueue;
+  }
 
  transition(U, Flush, F) {L3TagArrayRead, L3TagArrayWrite} {
     t_allocateTBE;

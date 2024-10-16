@@ -69,8 +69,8 @@ DebugFlag('RubyStats')
 DebugFlag('RubyResourceStalls')
 DebugFlag('RubyProtocol')
 DebugFlag('RubyHitMiss')
-# earlyData
-DebugFlag('OPT')
+# earlyData flag
+DebugFlag('OPT1')
 
 CompoundFlag('Ruby', [ 'RubyQueue', 'RubyNetwork', 'RubyTester',
     'RubyGenerated', 'RubySlicc', 'RubySystem', 'RubyCache',

@@ -73,10 +73,11 @@ namespace gem5
 
 HSAPP_EVENT_DESCRIPTION_GENERATOR(QueueProcessEvent)
 
+// Cambio para evitar fallo en benchmarks Chai (2*PAGE_SIZE)
 HSAPacketProcessor::HSAPacketProcessor(const Params &p)
     : DmaVirtDevice(p), walker(p.walker),
       numHWQueues(p.numHWQueues), pioAddr(p.pioAddr),
-      pioSize(PAGE_SIZE), pioDelay(10), pktProcessDelay(p.pktProcessDelay)
+      pioSize(2*PAGE_SIZE), pioDelay(10), pktProcessDelay(p.pktProcessDelay)
 {
     DPRINTF(HSAPacketProcessor, "%s:\n", __FUNCTION__);
     hwSchdlr = new HWScheduler(this, p.wakeupDelay);

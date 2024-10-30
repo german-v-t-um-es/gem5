@@ -68,14 +68,6 @@ void m5_work_begin(uint64_t workid, uint64_t threadid);
 void m5_work_end(uint64_t workid, uint64_t threadid);
 
 /*
- * Send a very generic poke to the workload so it can do something. It's up to
- * the workload to know what information to look for to interpret an event,
- * such as what PC it came from, what register values are, or the context of
- * the workload itself (is this SE mode? which OS is running?).
- */
-void m5_workload();
-
-/*
  * Two-way communication channel between benchmark (guest) and
  * simulator via m5_sum op. Mostly used for instrumentation of HTM
  * library, but also to deal with synchronization issues when using
@@ -99,6 +91,14 @@ void m5_workload();
 #define M5_SUM_HACK_TYPE_REGION_BEGIN 0xBAAD
 #define M5_SUM_HACK_TYPE_REGION_END   0xF00D
 #define M5_SUM_HACK_TYPE_LOGTM_SETUP_LOG   0xDEAD
+
+/*
+ * Send a very generic poke to the workload so it can do something. It's up to
+ * the workload to know what information to look for to interpret an event,
+ * such as what PC it came from, what register values are, or the context of
+ * the workload itself (is this SE mode? which OS is running?).
+ */
+void m5_workload();
 
 /*
  * Create _addr and _semi versions all declarations, e.g. m5_exit_addr and

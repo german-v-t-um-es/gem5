@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-#include <gem5/m5ops.h>
+#include <../include/gem5/m5ops.h>
 
 typedef enum {
   M5_OP_INDIRECT_MODE_NOP,

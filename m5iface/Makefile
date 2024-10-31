@@ -1,6 +1,6 @@
 # gem5 hooks library
 
-GEM5_ROOT = ../../../..
+GEM5_ROOT = ..
 
 ifndef ARCH
 $(error ARCH not set)

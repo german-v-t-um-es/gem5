@@ -110,7 +110,8 @@ void m5_workload();
  * trouble tham leaving them in.
  */
 #define M5OP(name, func) __typeof__(name) M5OP_MERGE_TOKENS(name, _addr); \
-                         __typeof__(name) M5OP_MERGE_TOKENS(name, _semi);
+                         __typeof__(name) M5OP_MERGE_TOKENS(name, _semi); \
+                         __typeof__(name) M5OP_MERGE_TOKENS(name, _nop);
 M5OP_FOREACH
 #undef M5OP
 

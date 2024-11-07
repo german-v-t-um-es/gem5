@@ -1020,29 +1020,29 @@ while True:
     ):
         print(f"breaking loop due to: {exit_event.getCause()}.")
         break
-    # elif "checkpoint" in exit_event.getCause():
-    #     assert args.checkpoint_dir is not None
-    #     m5.checkpoint(args.checkpoint_dir)
-    #     print("breaking loop with checkpoint")
-    #     break
-    # elif "GPU Kernel Completed" in exit_event.getCause():
-    #     print("GPU Kernel Completed dump and reset")
+    elif "checkpoint" in exit_event.getCause():
+        assert args.checkpoint_dir is not None
+        m5.checkpoint(args.checkpoint_dir)
+        print("breaking loop with checkpoint")
+        break
+    elif "GPU Kernel Completed" in exit_event.getCause():
+        print("GPU Kernel Completed")
         # m5.stats.dump()
         # m5.stats.reset()
-    # elif "GPU Blit Kernel Completed" in exit_event.getCause():
-    #     print("GPU Blit Kernel Completed dump and reset")
-    #     # m5.stats.dump()
-    #     # m5.stats.reset()
-    # elif "workbegin" in exit_event.getCause():
-    #     print("m5 work begin dump and reset")
-    #     # m5.stats.dump()
-    #     # m5.stats.reset()
-    # elif "workend" in exit_event.getCause():
-    #     print("m5 work end dump and reset")
-    #     # m5.stats.dump()
-    #     # m5.stats.reset()
-    # else:
-    #     print(f"Unknown exit event: {exit_event.getCause()}. Continuing...")
+    elif "GPU Blit Kernel Completed" in exit_event.getCause():
+        print("GPU Blit Kernel Completed dump and reset")
+        # m5.stats.dump()
+        # m5.stats.reset()
+    elif "workbegin" in exit_event.getCause():
+        print("m5 work begin dump and reset")
+        # m5.stats.dump()
+        # m5.stats.reset()
+    elif "workend" in exit_event.getCause():
+        print("m5 work end dump and reset")
+        # m5.stats.dump()
+        # m5.stats.reset()
+    else:
+        print(f"Unknown exit event: {exit_event.getCause()}. Continuing...")
 
     exit_event = m5.simulate(maxtick - m5.curTick())
 

@@ -184,6 +184,8 @@ m5exit(ThreadContext *tc, Tick delay)
     }
 }
 
+// ROI
+
 // m5sum is for sanity checking the gem5 op interface.
 uint64_t
 m5sum(ThreadContext *tc, uint64_t a, uint64_t b, uint64_t c,

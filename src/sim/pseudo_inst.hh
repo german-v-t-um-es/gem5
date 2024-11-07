@@ -250,6 +250,8 @@ pseudoInstWork(ThreadContext *tc, uint8_t func, uint64_t &result)
         invokeSimcall<ABI>(tc, triggerWorkloadEvent);
         return true;
 
+      // ROI
+
       default:
         warn("Unhandled m5 op: %#x\n", func);
         return false;

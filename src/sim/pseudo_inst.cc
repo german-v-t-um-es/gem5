@@ -184,8 +184,6 @@ m5exit(ThreadContext *tc, Tick delay)
     }
 }
 
-// ROI
-
 // m5sum is for sanity checking the gem5 op interface.
 uint64_t
 m5sum(ThreadContext *tc, uint64_t a, uint64_t b, uint64_t c,
@@ -488,6 +486,22 @@ triggerWorkloadEvent(ThreadContext *tc)
 {
     DPRINTF(PseudoInst, "pseudo_inst::triggerWorkloadEvent()\n");
     tc->getSystemPtr()->workload->event(tc);
+}
+
+// ROI
+
+void m5roibegin(ThreadContext *tc)
+{
+    DPRINTF(PseudoInst, "pseudo_inst::m5roibegin\n");
+    Tick when = curTick() + 0 * sim_clock::as_int::ns;
+    exitSimLoop("m5 ROI begin", 0, when, 0, true);
+}
+
+void m5roiend(ThreadContext *tc)
+{
+    DPRINTF(PseudoInst, "pseudo_inst::m5roiend(%i)\n", delay);
+    Tick when = curTick() + 0 * sim_clock::as_int::ns;
+    exitSimLoop("m5 ROI end", 0, when, 0, true);
 }
 
 //

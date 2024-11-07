@@ -1041,6 +1041,13 @@ while True:
         print("m5 work end dump and reset")
         # m5.stats.dump()
         # m5.stats.reset()
+    elif "m5 ROI Begin" in exit_event.getCause():
+        print("m5 ROI Begin")
+        m5.stats.reset()
+    elif "m5 ROI End" in exit_event.getCause():
+        print("m5 ROI End")
+        m5.stats.dump()
+        m5.stats.reset()
     else:
         print(f"Unknown exit event: {exit_event.getCause()}. Continuing...")
 

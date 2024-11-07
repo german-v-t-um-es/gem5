@@ -255,11 +255,11 @@ pseudoInstWork(ThreadContext *tc, uint8_t func, uint64_t &result)
 
       // ROI
       case M5OP_ROI_BEGIN:
-        invokeSimcall<ABI>(tc);
+        invokeSimcall<ABI>(tc, m5_roi_begin);
         return true;
       
       case M5OP_ROI_END:
-        invokeSimcall<ABI>(tc);
+        invokeSimcall<ABI>(tc, m5_roi_end);
         return true;
 
       default:

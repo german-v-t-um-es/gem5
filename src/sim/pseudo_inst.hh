@@ -115,8 +115,8 @@ void togglesync(ThreadContext *tc);
 void triggerWorkloadEvent(ThreadContext *tc);
 
 // ROI
-void m5roibegin(ThreadContext *tc);
-void m5roiend(ThreadContext *tc);
+void m5_roi_begin(ThreadContext *tc);
+void m5_roi_end(ThreadContext *tc);
 
 /**
  * Execute a decoded M5 pseudo instruction

@@ -80,7 +80,7 @@
 
 #define M5OP_WORKLOAD           0x70
 
-// ROI
+// ROI incorporation
 #define M5OP_ROI_BEGIN          0x80
 #define M5OP_ROI_END            0x81
 
@@ -114,7 +114,7 @@
     M5OP(m5_workload, M5OP_WORKLOAD)                            \
     M5OP(m5_roi_begin, M5OP_ROI_BEGIN)                          \
     M5OP(m5_roi_end, M5OP_ROI_END)                              \
-    // ROI
+    // ROI incorporation
 
 #define M5OP_MERGE_TOKENS_I(a, b) a##b
 #define M5OP_MERGE_TOKENS(a, b) M5OP_MERGE_TOKENS_I(a, b)

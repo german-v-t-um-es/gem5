@@ -114,7 +114,7 @@ void m5Syscall(ThreadContext *tc);
 void togglesync(ThreadContext *tc);
 void triggerWorkloadEvent(ThreadContext *tc);
 
-// ROI
+// ROI incorporation
 void m5_roi_begin(ThreadContext *tc);
 void m5_roi_end(ThreadContext *tc);
 
@@ -253,7 +253,7 @@ pseudoInstWork(ThreadContext *tc, uint8_t func, uint64_t &result)
         invokeSimcall<ABI>(tc, triggerWorkloadEvent);
         return true;
 
-      // ROI
+      // ROI incorporation
       case M5OP_ROI_BEGIN:
         invokeSimcall<ABI>(tc, m5_roi_begin);
         return true;

@@ -488,7 +488,7 @@ triggerWorkloadEvent(ThreadContext *tc)
     tc->getSystemPtr()->workload->event(tc);
 }
 
-// ROI
+// ROI incorporation
 
 void m5_roi_begin(ThreadContext *tc)
 {

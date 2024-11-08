@@ -1041,6 +1041,7 @@ while True:
         print("m5 work end dump and reset")
         # m5.stats.dump()
         # m5.stats.reset()
+    # ROI incorporation
     elif "m5 ROI Begin" in exit_event.getCause():
         print("m5 ROI Begin")
         m5.stats.reset()

@@ -39,8 +39,8 @@ class X86GPUTLB(ClockedObject):
     cxx_class = "gem5::X86ISA::GpuTLB"
     cxx_header = "arch/amdgpu/common/tlb.hh"
     # Modify 64 to 128
-    size = Param.Int(128, "TLB size (number of entries)")
-    assoc = Param.Int(128, "TLB associativity")
+    size = Param.Int(64, "TLB size (number of entries)")
+    assoc = Param.Int(64, "TLB associativity")
 
     if buildEnv.get("FULL_SYSTEM", False):
         walker = Param.X86PagetableWalker(

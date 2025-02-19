@@ -38,6 +38,8 @@
 #include "sim/system.hh"
 #include "sim/vma.hh"
 
+#include "debug/GPUTLB.hh"
+
 namespace gem5
 {
 
@@ -391,6 +393,7 @@ MemState::remapRegion(Addr start_addr, Addr new_start_addr, Addr length)
 bool
 MemState::fixupFault(Addr vaddr)
 {
+    DPRINTF(GPUTLB, "Calling fixupFault\n");
     /**
      * Check if we are accessing a mapped virtual address. If so then we
      * just haven't allocated it a physical page yet and can do so here.
@@ -418,6 +421,7 @@ MemState::fixupFault(Addr vaddr)
                     vma.fillMemPages(vpage_start, _pageBytes, virt_mem);
                 }
             }
+            DPRINTF(GPUTLB, "Exiting fixupFault in first option\n");
             return true;
         }
     }
@@ -431,6 +435,7 @@ MemState::fixupFault(Addr vaddr)
      */
     if (vaddr >= _stackMin && vaddr < _stackBase) {
         _ownerProcess->allocateMem(roundDown(vaddr, _pageBytes), _pageBytes);
+        DPRINTF(GPUTLB, "Exiting fixupFault in second option\n");
         return true;
     }
 
@@ -441,15 +446,26 @@ MemState::fixupFault(Addr vaddr)
     if (vaddr < _stackMin && vaddr >= _stackBase - _maxStackSize) {
         while (vaddr < _stackMin) {
             _stackMin -= _pageBytes;
-            if (_stackBase - _stackMin > _maxStackSize) {
+            // Modifications _stackSize
+            Addr _old_stackSize = _stackSize;
+            _stackSize = _stackBase - _stackMin;
+            if (_stackSize > _maxStackSize) {
                 fatal("Maximum stack size exceeded\n");
             }
             _ownerProcess->allocateMem(_stackMin, _pageBytes);
+            inform("stackMin: %#x, stackBase: %#x, maxStackSize: %#x, stackSize: %#x -> %#x", getStackMin(), getStackBase(), getMaxStackSize(), _old_stackSize, getStackSize());
             inform("Increasing stack size by one page.");
         }
+        DPRINTF(GPUTLB, "Exiting fixupFault in third option\n");
         return true;
     }
 
+    // Checking if we have conflictive address in AES
+    if ((vaddr & 0xFFFFFFFFFFF00000) == 0x7fff00000000) {
+        fatal("Address starts with 0x7fff0, assertion failed!");
+    }
+
+    DPRINTF(GPUTLB, "Exiting fixupFault with false value\n");
     return false;
 }
 

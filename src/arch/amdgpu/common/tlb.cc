@@ -957,8 +957,12 @@ namespace X86ISA
             assert(alignedVaddr == virtPageAddr);
 
             const EmulationPageTable::Entry *pte = p->pTable->lookup(vaddr);
+            if (!pte)
+                DPRINTF(GPUTLB, "A mapping was not found for %#x after first lookup()\n", alignedVaddr);
+            DPRINTF(GPUTLB, "sender_state->tlbMode=%x (R=0/W=1/E=2)\n", sender_state->tlbMode);
             if (!pte && sender_state->tlbMode != BaseMMU::Execute &&
                     p->fixupFault(vaddr)) {
+                DPRINTF(GPUTLB, "A mapping was not found for %#x, executing a second lookup\n", alignedVaddr);
                 pte = p->pTable->lookup(vaddr);
             }
 
@@ -970,9 +974,10 @@ namespace X86ISA
                     new TlbEntry(p->pid(), virtPageAddr, pte->paddr, false,
                                  false);
             } else {
+                DPRINTF(GPUTLB, "A mapping was not found for %#x\n", alignedVaddr);
                 sender_state->tlbEntry = nullptr;
             }
-
+            
             handleTranslationReturn(virtPageAddr, TLB_MISS, pkt);
         } else if (outcome == MISS_RETURN) {
             /** we add an extra cycle in the return path of the translation

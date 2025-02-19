@@ -57,6 +57,8 @@
 #include "sim/process.hh"
 #include "sim/pseudo_inst.hh"
 
+#include "debug/GPUTLB.hh"
+
 namespace gem5
 {
 
@@ -537,6 +539,7 @@ TLB::translateFunctional(const RequestPtr &req, ThreadContext *tc,
 
         if (!pte && mode != BaseMMU::Execute) {
             // Check if we just need to grow the stack.
+            DPRINTF(GPUTLB, "Calling fixupFault from CPU\n");
             if (process->fixupFault(vaddr)) {
                 // If we did, lookup the entry for the new page.
                 pte = process->pTable->lookup(vaddr);

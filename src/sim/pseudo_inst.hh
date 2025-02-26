@@ -113,6 +113,7 @@ void workend(ThreadContext *tc, uint64_t workid, uint64_t threadid);
 void m5Syscall(ThreadContext *tc);
 void togglesync(ThreadContext *tc);
 void triggerWorkloadEvent(ThreadContext *tc);
+<<<<<<< HEAD
 
 // ROI incorporation
 void m5_roi_begin(ThreadContext *tc);
@@ -120,6 +121,9 @@ void m5_roi_end(ThreadContext *tc);
 
 // Print registers
 void m5_dump_regs(ThreadContext *tc);
+=======
+void m5Hypercall(ThreadContext *tc, uint64_t hypercall_id);
+>>>>>>> upstream/develop
 
 /**
  * Execute a decoded M5 pseudo instruction
@@ -269,6 +273,10 @@ pseudoInstWork(ThreadContext *tc, uint8_t func, uint64_t &result)
         invokeSimcall<ABI>(tc, m5_dump_regs);
         return true;
 
+      case M5OP_HYPERCALL:
+        invokeSimcall<ABI>(tc, m5Hypercall);
+        return true;
+        
       default:
         warn("Unhandled m5 op: %#x\n", func);
         return false;

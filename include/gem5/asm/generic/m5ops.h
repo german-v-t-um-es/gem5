@@ -80,6 +80,7 @@
 
 #define M5OP_WORKLOAD           0x70
 
+<<<<<<< HEAD
 // ROI incorporation
 #define M5OP_ROI_BEGIN          0x80
 #define M5OP_ROI_END            0x81
@@ -87,6 +88,9 @@
 // Print Registers
 #define M5OP_DUMP_REGS          0x90
 
+=======
+#define M5OP_HYPERCALL          0x71
+>>>>>>> upstream/develop
 
 #define M5OP_FOREACH                                            \
     M5OP(m5_arm, M5OP_ARM)                                      \
@@ -115,10 +119,14 @@
     M5OP(m5_work_end, M5OP_WORK_END)                            \
     M5OP(m5_dist_toggle_sync, M5OP_DIST_TOGGLE_SYNC)            \
     M5OP(m5_workload, M5OP_WORKLOAD)                            \
+<<<<<<< HEAD
     M5OP(m5_roi_begin, M5OP_ROI_BEGIN)                          \
     M5OP(m5_roi_end, M5OP_ROI_END)                              \
     M5OP(m5_dump_regs, M5OP_DUMP_REGS)                          \
     // My incorporations
+=======
+    M5OP(m5_hypercall, M5OP_HYPERCALL)                          \
+>>>>>>> upstream/develop
 
 #define M5OP_MERGE_TOKENS_I(a, b) a##b
 #define M5OP_MERGE_TOKENS(a, b) M5OP_MERGE_TOKENS_I(a, b)

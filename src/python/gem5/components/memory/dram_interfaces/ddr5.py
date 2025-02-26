@@ -24,7 +24,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Interfaces for DDR5 memories"""
+"""Interfaces for DDR5 memories
+"""
 
 from m5.objects import DRAMInterface
 
@@ -49,7 +50,7 @@ class DDR5_4400_4x8(DRAMInterface):
     burst_length = 16
 
     # Each device has a page (row buffer) size of 256B
-    # Four devices lead to a page size of 1KiB
+    # Four devices lead to a page size of 1KB
     device_rowbuffer_size = "256B"
 
     # 4Gbx8 configuration
@@ -85,10 +86,10 @@ class DDR5_4400_4x8(DRAMInterface):
     # RRD_S (different bank group) : 8nCK
     tRRD = "3.632ns"
 
-    # RRD_L (same bank group) is MAX(8nCK, 5ns) for 1KiB page
+    # RRD_L (same bank group) is MAX(8nCK, 5ns) for 1KB page
     tRRD_L = "5ns"
 
-    # tFAW for 1KiB page is MAX(32nCK, 14.545ns)
+    # tFAW for 1KB page is MAX(32nCK, 14.545ns)
     tXAW = "14.545ns"
     activation_limit = 4
 
@@ -193,10 +194,10 @@ class DDR5_6400_4x8(DDR5_4400_4x8):
     # RRD_S (different bank group) : 8nCK
     tRRD = "2.496ns"
 
-    # RRD_L (same bank group) is MAX(8nCK, 5ns) for 1KiB page
+    # RRD_L (same bank group) is MAX(8nCK, 5ns) for 1KB page
     tRRD_L = "5ns"
 
-    # tFAW for 1KiB page is MAX(32 CK, 10.00ns)
+    # tFAW for 1KB page is MAX(32 CK, 10.00ns)
     tXAW = "10ns"
 
     # Rd/Wr turnaround timings
@@ -253,7 +254,7 @@ class DDR5_8400_4x8(DDR5_4400_4x8):
     # RRD_S (different bank group) : 8nCK
     tRRD = "1.904ns"
 
-    # tFAW for 1KiB page is MAX(32 CK, 10.00ns)
+    # tFAW for 1KB page is MAX(32 CK, 10.00ns)
     tXAW = "10ns"
 
     # Rd/Wr turnaround timings

@@ -91,8 +91,6 @@ class ScalarMemPipeline
 
     const std::string& name() const { return _name; }
 
-    void printProgress();
-
   private:
     ComputeUnit &computeUnit;
     const std::string _name;

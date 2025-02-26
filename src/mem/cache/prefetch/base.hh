@@ -74,13 +74,11 @@ class Base : public ClockedObject
     class PrefetchListener : public ProbeListenerArgBase<CacheAccessProbeArg>
     {
       public:
-        PrefetchListener(Base &_parent, std::string name, bool _isFill = false,
+        PrefetchListener(Base &_parent, ProbeManager *pm,
+                         const std::string &name, bool _isFill = false,
                          bool _miss = false)
-            : ProbeListenerArgBase(std::move(name)),
-              parent(_parent),
-              isFill(_isFill),
-              miss(_miss)
-        {}
+            : ProbeListenerArgBase(pm, name),
+              parent(_parent), isFill(_isFill), miss(_miss) {}
         void notify(const CacheAccessProbeArg &arg) override;
       protected:
         Base &parent;
@@ -93,15 +91,15 @@ class Base : public ClockedObject
     class PrefetchEvictListener : public ProbeListenerArgBase<EvictionInfo>
     {
       public:
-        PrefetchEvictListener(Base &_parent, std::string name)
-            : ProbeListenerArgBase(std::move(name)), parent(_parent)
-        {}
+        PrefetchEvictListener(Base &_parent, ProbeManager *pm,
+                              const std::string &name)
+            : ProbeListenerArgBase(pm, name), parent(_parent) {}
         void notify(const EvictionInfo &info) override;
       protected:
         Base &parent;
     };
 
-    std::vector<ProbeListenerPtr<>> listeners;
+    std::vector<ProbeListener *> listeners;
 
   public:
 

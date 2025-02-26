@@ -53,27 +53,17 @@ Clint::Clint(const Params &params) :
     BasicPioDevice(params, params.pio_size),
     system(params.system),
     nThread(params.num_threads),
-    signal(params.name + ".signal", 0, this, INT_RTC),
-    reset(params.name + ".reset"),
-    resetMtimecmp(params.reset_mtimecmp),
-    registers(params.name + ".registers", params.pio_addr, this,
-              params.mtimecmp_reset_value)
+    signal(params.name + ".signal", 0, this),
+    registers(params.name + ".registers", params.pio_addr, this)
 {
-      reset.onChange([this](const bool& new_val){
-          if (new_val) {
-              doReset();
-          }
-      });
 }
 
 void
 Clint::raiseInterruptPin(int id)
 {
-    // Increment mtime when received RTC signal
+    // Increment mtime
     uint64_t& mtime = registers.mtime.get();
-    if (id == INT_RTC) {
-        mtime++;
-    }
+    mtime++;
 
     for (int context_id = 0; context_id < nThread; context_id++) {
 
@@ -110,25 +100,20 @@ Clint::ClintRegisters::init()
 {
     using namespace std::placeholders;
 
-    // Sanity check
-    assert(clint->pioSize >= minBankSize);
-
     // Calculate reserved space size
     const size_t reserved0_size = mtimecmpStart - clint->nThread * 4;
     reserved.emplace_back("reserved0", reserved0_size);
     const size_t reserved1_size = mtimeStart
         - mtimecmpStart - clint->nThread * 8;
     reserved.emplace_back("reserved1", reserved1_size);
-    const size_t reserved2_size = clint->pioSize - minBankSize;
-    if (reserved2_size > 0) {
-        reserved.emplace_back("reserved2", reserved2_size);
-    }
+
+    // Sanity check
+    assert((int) clint->pioSize <= maxBankSize);
 
     // Initialize registers
     for (int i = 0; i < clint->nThread; i++) {
         msip.emplace_back(std::string("msip") + std::to_string(i), 0);
-        mtimecmp.emplace_back(
-            std::string("mtimecmp") + std::to_string(i), mtimecmpResetValue);
+        mtimecmp.emplace_back(std::string("mtimecmp") + std::to_string(i), 0);
     }
 
     // Add registers to bank
@@ -146,9 +131,6 @@ Clint::ClintRegisters::init()
     addRegister(reserved[1]);
     mtime.readonly();
     addRegister(mtime);
-    if (reserved2_size > 0) {
-        addRegister(reserved[2]);
-    }
 }
 
 uint32_t
@@ -227,8 +209,6 @@ Clint::getPort(const std::string &if_name, PortID idx)
 {
     if (if_name == "int_pin")
         return signal;
-    else if (if_name == "reset")
-        return reset;
     else
         return BasicPioDevice::getPort(if_name, idx);
 }
@@ -255,22 +235,6 @@ Clint::unserialize(CheckpointIn &cp)
         paramIn(cp, reg.name(), reg);
     }
     paramIn(cp, "mtime", registers.mtime);
-}
-
-void
-Clint::doReset() {
-    registers.mtime.reset();
-    for (int i = 0; i < nThread; i++) {
-        // According to the spec, the mtimecmp is in unknown state
-        // Assume we will change the mtimecmp registers to specify value
-        // if the mtimecmp registers accept the reset signal.
-        if (resetMtimecmp) {
-            registers.mtimecmp[i].reset();
-        }
-        registers.msip[i].reset();
-    }
-    // We need to update the mtip interrupt bits when reset
-    raiseInterruptPin(INT_RESET);
 }
 
 } // namespace gem5

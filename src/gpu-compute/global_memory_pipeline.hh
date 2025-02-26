@@ -109,8 +109,6 @@ class GlobalMemPipeline
 
     void acqCoalescerToken(GPUDynInstPtr mp);
 
-    void printProgress();
-
   private:
     ComputeUnit &computeUnit;
     const std::string _name;

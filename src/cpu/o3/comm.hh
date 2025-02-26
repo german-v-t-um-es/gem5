@@ -116,14 +116,14 @@ struct TimeStruct
         std::unique_ptr<PCStateBase> nextPC;
         DynInstPtr mispredictInst;
         DynInstPtr squashInst;
-        InstSeqNum doneSeqNum = 0;
-        Addr mispredPC = 0;
-        uint64_t branchAddr = 0;
-        unsigned branchCount = 0;
-        bool squash = false;
-        bool predIncorrect = false;
-        bool branchMispredict = false;
-        bool branchTaken = false;
+        InstSeqNum doneSeqNum;
+        Addr mispredPC;
+        uint64_t branchAddr;
+        unsigned branchCount;
+        bool squash;
+        bool predIncorrect;
+        bool branchMispredict;
+        bool branchTaken;
     };
 
     DecodeComm decodeInfo[MaxThreads];
@@ -135,18 +135,18 @@ struct TimeStruct
     struct IewComm
     {
         // Also eventually include skid buffer space.
-        unsigned freeIQEntries = 0;
-        unsigned freeLQEntries = 0;
-        unsigned freeSQEntries = 0;
-        unsigned dispatchedToLQ = 0;
-        unsigned dispatchedToSQ = 0;
+        unsigned freeIQEntries;
+        unsigned freeLQEntries;
+        unsigned freeSQEntries;
+        unsigned dispatchedToLQ;
+        unsigned dispatchedToSQ;
 
-        unsigned iqCount = 0;
-        unsigned ldstqCount = 0;
+        unsigned iqCount;
+        unsigned ldstqCount;
 
-        unsigned dispatched = 0;
-        bool usedIQ = false;
-        bool usedLSQ = false;
+        unsigned dispatched;
+        bool usedIQ;
+        bool usedLSQ;
     };
 
     IewComm iewInfo[MaxThreads];
@@ -183,35 +183,35 @@ struct TimeStruct
 
         /// Communication specifically to the IQ to tell the IQ that it can
         /// schedule a non-speculative instruction.
-        InstSeqNum nonSpecSeqNum = 0; // *I
+        InstSeqNum nonSpecSeqNum; // *I
 
         /// Represents the instruction that has either been retired or
         /// squashed.  Similar to having a single bus that broadcasts the
         /// retired or squashed sequence number.
-        InstSeqNum doneSeqNum = 0; // *F, I
+        InstSeqNum doneSeqNum; // *F, I
 
         /// Tell Rename how many free entries it has in the ROB
-        unsigned freeROBEntries = 0; // *R
+        unsigned freeROBEntries; // *R
 
-        bool squash = false; // *F, D, R, I
-        bool robSquashing = false; // *F, D, R, I
+        bool squash; // *F, D, R, I
+        bool robSquashing; // *F, D, R, I
 
         /// Rename should re-read number of free rob entries
-        bool usedROB = false; // *R
+        bool usedROB; // *R
 
         /// Notify Rename that the ROB is empty
-        bool emptyROB = false; // *R
+        bool emptyROB; // *R
 
         /// Was the branch taken or not
-        bool branchTaken = false; // *F
+        bool branchTaken; // *F
         /// If an interrupt is pending and fetch should stall
-        bool interruptPending = false; // *F
+        bool interruptPending; // *F
         /// If the interrupt ended up being cleared before being handled
-        bool clearInterrupt = false; // *F
+        bool clearInterrupt; // *F
 
         /// Hack for now to send back an strictly ordered access to
         /// the IEW stage.
-        bool strictlyOrdered = false; // *I
+        bool strictlyOrdered; // *I
 
     };
 
@@ -224,25 +224,6 @@ struct TimeStruct
     bool iewBlock[MaxThreads];
     bool iewUnblock[MaxThreads];
 };
-
-/**
- * Remove instructions belonging to given thread from the
- * given comm struct's instruction array. Automatically
- * updates the array size.
- */
-template <class CommStruct>
-void
-removeCommThreadInsts(ThreadID tid, CommStruct& comm_struct)
-{
-    auto has_tid = [tid] (const auto &inst) -> bool {
-        return inst && inst->threadNumber == tid;
-    };
-    DynInstPtr *last = std::remove_if(comm_struct.insts,
-                                      comm_struct.insts + comm_struct.size,
-                                      has_tid);
-    std::fill(last, comm_struct.insts + comm_struct.size, nullptr);
-    comm_struct.size = last - comm_struct.insts;
-}
 
 } // namespace o3
 } // namespace gem5

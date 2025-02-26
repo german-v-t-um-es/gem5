@@ -76,7 +76,6 @@ class StubWorkload(Workload):
 
 class KernelPanicOopsBehaviour(ScopedEnum):
     "Define what gem5 should do after a Kernel Panic or Oops."
-
     vals = [
         "Continue",
         "DumpDmesgAndContinue",

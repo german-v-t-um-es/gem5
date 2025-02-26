@@ -68,9 +68,10 @@ SimpleTrace::regProbeListeners()
 {
     typedef ProbeListenerArg<SimpleTrace,
             DynInstConstPtr> DynInstListener;
-    connectListener<DynInstListener>(this, "Commit",
-                                     &SimpleTrace::traceCommit);
-    connectListener<DynInstListener>(this, "Fetch", &SimpleTrace::traceFetch);
+    listeners.push_back(new DynInstListener(this, "Commit",
+                &SimpleTrace::traceCommit));
+    listeners.push_back(new DynInstListener(this, "Fetch",
+                &SimpleTrace::traceFetch));
 }
 
 } // namespace o3

@@ -34,7 +34,6 @@
 
 #include "arch/gpu_isa.hh"
 #include "config/the_gpu_isa.hh"
-#include "debug/GPUTrace.hh"
 #include "debug/GPUVRF.hh"
 #include "gpu-compute/register_file.hh"
 #include "gpu-compute/wavefront.hh"
@@ -99,9 +98,6 @@ class VectorRegisterFile : public RegisterFile
                 DPRINTF(GPUVRF, "WF[%d][%d]: WV[%d] v[%d][%d] = %#x\n",
                     wf->simdId, wf->wfSlotId, wf->wfDynId, regIdx, lane,
                     vgpr[lane]);
-                DPRINTF(GPUTrace, "WF[%d][%d]: WV[%d] v[%d][%d] = %#x (%f)\n",
-                    wf->simdId, wf->wfSlotId, wf->wfDynId, regIdx, lane,
-                    vgpr[lane], *reinterpret_cast<const float*>(&vgpr[lane]));
             }
         }
 #endif

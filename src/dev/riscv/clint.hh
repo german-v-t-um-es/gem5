@@ -74,8 +74,6 @@ class Clint : public BasicPioDevice
     System *system;
     int nThread;
     IntSinkPin<Clint> signal;
-    SignalSinkPort<bool> reset;
-    bool resetMtimecmp;
 
   public:
     typedef ClintParams Params;
@@ -91,13 +89,6 @@ class Clint : public BasicPioDevice
     void raiseInterruptPin(int id);
     void lowerInterruptPin(int id) {}
 
-  // Interrupt ID
-  enum InterruptId
-  {
-      INT_RTC = 0, // received from RTC(signal port)
-      INT_RESET, // received from reset port
-  };
-
   // Register bank
   public:
 
@@ -108,28 +99,24 @@ class Clint : public BasicPioDevice
      * 0x4000 - 0xBFF7: mtimecmp
      * ...:             reserved[1]
      * 0xBFF8:          mtime (read-only)
-     * ...:             reserved[2]
      */
     class ClintRegisters: public RegisterBankLE
     {
       public:
         const Addr mtimecmpStart = 0x4000;
         const Addr mtimeStart = 0xBFF8;
-        const Addr minBankSize = 0xC000;
+        const Addr maxBankSize = 0xC000;
 
         std::vector<Register32> msip;
         std::vector<Register64> mtimecmp;
         Register64 mtime = {"mtime", 0};
         std::vector<RegisterRaz> reserved;
 
-        ClintRegisters(const std::string &name, Addr base, Clint* clint,
-                       uint64_t mtimecmp_reset_value) :
+        ClintRegisters(const std::string &name, Addr base, Clint* clint) :
           RegisterBankLE(name, base),
-          clint(clint),
-          mtimecmpResetValue(mtimecmp_reset_value) {}
+          clint(clint) {}
 
         Clint *clint;
-        uint64_t mtimecmpResetValue;
 
         void init();
 
@@ -156,10 +143,6 @@ class Clint : public BasicPioDevice
                    PortID idx=InvalidPortID) override;
     void serialize(CheckpointOut &cp) const override;
     void unserialize(CheckpointIn &cp) override;
-
-  // CLINT reset
-  public:
-    void doReset();
 
 };
 

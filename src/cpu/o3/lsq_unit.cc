@@ -270,9 +270,7 @@ LSQUnit::LSQUnitStats::LSQUnitStats(statistics::Group *parent)
                "Number of times an access to memory failed due to the cache "
                "being blocked"),
       ADD_STAT(loadToUse, "Distribution of cycle latency between the "
-                "first time a load is issued and its completion"),
-      ADD_STAT(addedLoadsAndStores, statistics::units::Count::get(),
-               "Number of loads and stores written to the Load Store Queue")
+                "first time a load is issued and its completion")
 {
     loadToUse
         .init(0, 299, 10)
@@ -322,7 +320,6 @@ LSQUnit::insertLoad(const DynInstPtr &load_inst)
 {
     assert(!loadQueue.full());
     assert(loadQueue.size() < loadQueue.capacity());
-    ++stats.addedLoadsAndStores;
 
     DPRINTF(LSQUnit, "Inserting load PC %s, idx:%i [sn:%lli]\n",
             load_inst->pcState(), loadQueue.tail(), load_inst->seqNum);
@@ -384,7 +381,6 @@ LSQUnit::insertStore(const DynInstPtr& store_inst)
     // Make sure it is not full before inserting an instruction.
     assert(!storeQueue.full());
     assert(storeQueue.size() < storeQueue.capacity());
-    ++stats.addedLoadsAndStores;
 
     DPRINTF(LSQUnit, "Inserting store PC %s, idx:%i [sn:%lli]\n",
             store_inst->pcState(), storeQueue.tail(), store_inst->seqNum);

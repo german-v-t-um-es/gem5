@@ -597,7 +597,6 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             return;
         }
 
@@ -725,7 +724,6 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             return;
         }
 
@@ -855,7 +853,6 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             return;
         }
 
@@ -958,7 +955,6 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             return;
         }
 
@@ -1058,7 +1054,6 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             return;
         }
 
@@ -1157,7 +1152,6 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             return;
         }
 
@@ -1257,7 +1251,6 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             return;
         }
 
@@ -1362,7 +1355,6 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             return;
         }
 
@@ -1472,9 +1464,7 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             wf->decExpInstsIssued();
-            wf->untrackExpInst(gpuDynInst);
             return;
         }
 
@@ -1564,9 +1554,7 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             wf->decExpInstsIssued();
-            wf->untrackExpInst(gpuDynInst);
             return;
         }
 
@@ -1656,9 +1644,7 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             wf->decExpInstsIssued();
-            wf->untrackExpInst(gpuDynInst);
             return;
         }
 
@@ -1748,9 +1734,7 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             wf->decExpInstsIssued();
-            wf->untrackExpInst(gpuDynInst);
             return;
         }
 
@@ -1798,9 +1782,9 @@ namespace VegaISA
 
         for (int lane = 0; lane < NumVecElemPerVecReg; ++lane) {
             if (gpuDynInst->exec_mask[lane]) {
-                (reinterpret_cast<VecElemU32*>(gpuDynInst->d_data))[lane * 2]
+                (reinterpret_cast<VecElemU32*>(gpuDynInst->d_data))[lane * 4]
                     = data0[lane];
-                (reinterpret_cast<VecElemU32*>(gpuDynInst->d_data))[lane*2 + 1]
+                (reinterpret_cast<VecElemU32*>(gpuDynInst->d_data))[lane*4 + 1]
                     = data1[lane];
             }
         }
@@ -1844,9 +1828,7 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             wf->decExpInstsIssued();
-            wf->untrackExpInst(gpuDynInst);
             return;
         }
 
@@ -1896,11 +1878,11 @@ namespace VegaISA
 
         for (int lane = 0; lane < NumVecElemPerVecReg; ++lane) {
             if (gpuDynInst->exec_mask[lane]) {
-                (reinterpret_cast<VecElemU32*>(gpuDynInst->d_data))[lane * 3]
+                (reinterpret_cast<VecElemU32*>(gpuDynInst->d_data))[lane * 4]
                     = data0[lane];
-                (reinterpret_cast<VecElemU32*>(gpuDynInst->d_data))[lane*3 + 1]
+                (reinterpret_cast<VecElemU32*>(gpuDynInst->d_data))[lane*4 + 1]
                     = data1[lane];
-                (reinterpret_cast<VecElemU32*>(gpuDynInst->d_data))[lane*3 + 2]
+                (reinterpret_cast<VecElemU32*>(gpuDynInst->d_data))[lane*4 + 2]
                     = data2[lane];
             }
         }
@@ -1944,9 +1926,7 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             wf->decExpInstsIssued();
-            wf->untrackExpInst(gpuDynInst);
             return;
         }
 
@@ -2067,7 +2047,6 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             return;
         }
 
@@ -2127,7 +2106,6 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             return;
         }
 
@@ -2215,7 +2193,6 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             return;
         }
 

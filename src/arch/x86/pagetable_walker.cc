@@ -246,11 +246,8 @@ Walker::WalkerState::startWalk()
             assert(fault == NoFault || read == NULL);
             state = nextState;
             nextState = Ready;
-            if (write) {
+            if (write)
                 walker->port.sendAtomic(write);
-                // delete the write packet as it is not needed anymore
-                delete write;
-            }
         } while (read);
         state = Ready;
         nextState = Waiting;
@@ -273,10 +270,6 @@ Walker::WalkerState::startFunctional(Addr &addr, unsigned &logBytes)
         PacketPtr write = NULL;
         fault = stepWalk(write);
         assert(fault == NoFault || read == NULL);
-        // delete the write packet if it exists
-        if (write) {
-            delete write;
-        }
         state = nextState;
         nextState = Ready;
     } while (read);

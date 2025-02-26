@@ -52,11 +52,15 @@ namespace {
 class ExitLogger : public Logger
 {
   public:
-    ExitLogger(const char *prefix) : Logger(prefix)
+    using Logger::Logger;
+
+  protected:
+    void
+    log(const Loc &loc, std::string s) override
     {
-        registerExtraLog([]() {
-            return csprintf("Memory Usage: %ld KBytes\n", memUsage());
-        });
+        std::stringstream ss;
+        ccprintf(ss, "Memory Usage: %ld KBytes\n", memUsage());
+        Logger::log(loc, s + ss.str());
     }
 };
 

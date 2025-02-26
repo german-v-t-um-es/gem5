@@ -178,7 +178,7 @@ PMU::regProbeListeners()
 
     // at this stage all probe configurations are done
     // counters can be configured
-    for (uint32_t index = 0; index < maximumCounterCount; index++) {
+    for (uint32_t index = 0; index < maximumCounterCount-1; index++) {
         counters.emplace_back(*this, index, use64bitCounters);
     }
 
@@ -244,9 +244,6 @@ PMU::setMiscReg(int misc_reg, RegVal val)
       case MISCREG_PMEVTYPER0_EL0...MISCREG_PMEVTYPER5_EL0:
         setCounterTypeRegister(misc_reg - MISCREG_PMEVTYPER0_EL0, val);
         return;
-      case MISCREG_PMEVTYPER0...MISCREG_PMEVTYPER5:
-        setCounterTypeRegister(misc_reg - MISCREG_PMEVTYPER0, val);
-        return;
 
       case MISCREG_PMCCFILTR:
       case MISCREG_PMCCFILTR_EL0:
@@ -265,9 +262,6 @@ PMU::setMiscReg(int misc_reg, RegVal val)
 
       case MISCREG_PMEVCNTR0_EL0...MISCREG_PMEVCNTR5_EL0:
         setCounterValue(misc_reg - MISCREG_PMEVCNTR0_EL0, val);
-        return;
-      case MISCREG_PMEVCNTR0...MISCREG_PMEVCNTR5:
-        setCounterValue(misc_reg - MISCREG_PMEVCNTR0, val);
         return;
 
       case MISCREG_PMXEVCNTR_EL0:
@@ -355,13 +349,13 @@ PMU::readMiscRegInt(int misc_reg)
         return reg_pmceid1 & 0xFFFFFFFF;
 
       case MISCREG_PMCCNTR_EL0:
-      case MISCREG_PMCCNTR:
         return cycleCounter.getValue();
+
+      case MISCREG_PMCCNTR:
+        return cycleCounter.getValue() & 0xFFFFFFFF;
 
       case MISCREG_PMEVTYPER0_EL0...MISCREG_PMEVTYPER5_EL0:
         return getCounterTypeRegister(misc_reg - MISCREG_PMEVTYPER0_EL0);
-      case MISCREG_PMEVTYPER0...MISCREG_PMEVTYPER5:
-        return getCounterTypeRegister(misc_reg - MISCREG_PMEVTYPER0);
 
       case MISCREG_PMCCFILTR:
       case MISCREG_PMCCFILTR_EL0:
@@ -372,10 +366,11 @@ PMU::readMiscRegInt(int misc_reg)
       case MISCREG_PMXEVTYPER:
         return getCounterTypeRegister(reg_pmselr.sel);
 
-      case MISCREG_PMEVCNTR0_EL0...MISCREG_PMEVCNTR5_EL0:
-        return getCounterValue(misc_reg - MISCREG_PMEVCNTR0_EL0) & 0xFFFFFFFF;
-      case MISCREG_PMEVCNTR0...MISCREG_PMEVCNTR5:
-        return getCounterValue(misc_reg - MISCREG_PMEVCNTR0) & 0xFFFFFFFF;
+      case MISCREG_PMEVCNTR0_EL0...MISCREG_PMEVCNTR5_EL0: {
+            return getCounterValue(misc_reg - MISCREG_PMEVCNTR0_EL0) &
+                0xFFFFFFFF;
+
+        }
 
       case MISCREG_PMXEVCNTR_EL0:
       case MISCREG_PMXEVCNTR:
@@ -498,20 +493,8 @@ void
 PMU::RegularEvent::enable()
 {
     for (auto& subEvents: microArchitectureEventSet) {
-        ProbeManager *pm = subEvents.first->getProbeManager();
-        ProbePoint *probe = pm->getFirstProbePoint(subEvents.second);
-        // The PMU currently handles explicit PMU probes as well as
-        // cache events. For any further types of events we will need
-        // to handle them in this function.
-        if (dynamic_cast<probing::PMU *>(probe)) {
-            attachedProbePointList.push_back(
-                pm->connect<RegularProbe>(this, subEvents.second));
-        } else if (dynamic_cast<ProbePointArg<CacheAccessProbeArg> *>(probe)) {
-            attachedProbePointList.push_back(
-                pm->connect<CacheProbe>(this, subEvents.second));
-        } else {
-            panic("Unsupported probe kind for event %s", probe->getName());
-        }
+        attachedProbePointList.emplace_back(
+            new RegularProbe(this, subEvents.first, subEvents.second));
     }
 }
 
@@ -555,9 +538,8 @@ PMU::CounterState::detach()
         sourceEvent->detachEvent(this);
         sourceEvent = nullptr;
     } else {
-        DPRINTFS(PMUVerbose, &pmu,
-                 "detaching event %d not currently attached to any event"
-                 " [counterId = %d]\n", eventId, counterId);
+        debugCounter("detaching event not currently attached"
+            " to any event\n");
     }
 }
 
@@ -614,7 +596,6 @@ PMU::updateCounter(CounterState &ctr)
         if (sourceEvent == eventMap.end()) {
             warn("Can't enable PMU counter of type '0x%x': "
                  "No such event type.\n", ctr.eventId);
-            ctr.detach();
         } else {
             ctr.attach(sourceEvent->second);
         }

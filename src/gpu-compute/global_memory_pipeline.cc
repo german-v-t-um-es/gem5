@@ -137,10 +137,8 @@ GlobalMemPipeline::exec()
         m->completeAcc(m);
         if (m->isFlat()) {
             w->decLGKMInstsIssued();
-            w->untrackLGKMInst(m);
         }
         w->decVMemInstsIssued();
-        w->untrackVMemInst(m);
 
         if (m->isLoad() || m->isAtomicRet()) {
             w->computeUnit->vrf[w->simdId]->
@@ -205,7 +203,6 @@ GlobalMemPipeline::exec()
 
         if (mp->isStore() && mp->isGlobalSeg()) {
             mp->wavefront()->decExpInstsIssued();
-            mp->wavefront()->untrackExpInst(mp);
         }
 
         if (((mp->isMemSync() && !mp->isEndOfKernel()) || !mp->isMemSync())) {
@@ -313,21 +310,6 @@ GlobalMemPipeline::handleResponse(GPUDynInstPtr gpuDynInst)
     // buffer
     assert(mem_req != gmOrderedRespBuffer.end());
     mem_req->second.second = true;
-}
-
-void
-GlobalMemPipeline::printProgress()
-{
-    std::cout << "GMPipe inflight: " << inflightLoads << "/" << inflightStores
-              << " issued: " << gmIssuedRequests.size() << " returned: "
-              << gmOrderedRespBuffer.size() << " -- :\n";
-
-    for (auto &pair : gmOrderedRespBuffer) {
-        auto &inst_pair = pair.second;
-        auto &inst = inst_pair.first;
-        std::cout << "\t" << inst->disassemble() << " -- " << inst_pair.second
-                  << "\n";
-    }
 }
 
 GlobalMemPipeline::

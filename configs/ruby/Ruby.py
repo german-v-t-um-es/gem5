@@ -38,7 +38,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import math
-from importlib import import_module
 
 import m5
 from m5.defines import buildEnv
@@ -126,8 +125,9 @@ def define_options(parser):
         help="Recycle latency for ruby controller input buffers",
     )
 
-    import_module(f"ruby.{buildEnv['PROTOCOL']}").define_options(parser)
-
+    protocol = buildEnv["PROTOCOL"]
+    exec(f"from . import {protocol}")
+    eval(f"{protocol}.define_options(parser)")
     Network.define_options(parser)
 
 
@@ -246,17 +246,16 @@ def create_system(
     if cpus is None:
         cpus = system.cpu
 
+    protocol = buildEnv["PROTOCOL"]
+    exec(f"from . import {protocol}")
     try:
-        (cpu_sequencers, dir_cntrls, topology) = import_module(
-            f"ruby.{buildEnv['PROTOCOL']}"
-        ).create_system(
-            options, full_system, system, dma_ports, bootmem, ruby, cpus
+        (cpu_sequencers, dir_cntrls, topology) = eval(
+            "%s.create_system(options, full_system, system, dma_ports,\
+                                    bootmem, ruby, cpus)"
+            % protocol
         )
     except:
-        print(
-            "Error: could not create sytem for ruby protocol "
-            f"{buildEnv['PROTOCOL']}"
-        )
+        print(f"Error: could not create sytem for ruby protocol {protocol}")
         raise
 
     # Create the network topology
@@ -309,9 +308,7 @@ def create_directories(options, bootmem, ruby_system, system):
     for i in range(options.num_dirs):
         dir_cntrl = Directory_Controller()
         dir_cntrl.version = i
-        dir_cntrl.directory = RubyDirectoryMemory(
-            block_size=ruby_system.block_size_bytes
-        )
+        dir_cntrl.directory = RubyDirectoryMemory()
         dir_cntrl.ruby_system = ruby_system
 
         exec("ruby_system.dir_cntrl%d = dir_cntrl" % i)
@@ -319,9 +316,7 @@ def create_directories(options, bootmem, ruby_system, system):
 
     if bootmem is not None:
         rom_dir_cntrl = Directory_Controller()
-        rom_dir_cntrl.directory = RubyDirectoryMemory(
-            block_size=ruby_system.block_size_bytes
-        )
+        rom_dir_cntrl.directory = RubyDirectoryMemory()
         rom_dir_cntrl.ruby_system = ruby_system
         rom_dir_cntrl.version = i + 1
         rom_dir_cntrl.memory = bootmem.port

@@ -53,10 +53,10 @@ BaseMemProbe::regProbeListeners()
     const BaseMemProbeParams &p =
         dynamic_cast<const BaseMemProbeParams &>(params());
 
-    listeners.reserve(p.manager.size());
+    listeners.resize(p.manager.size());
     for (int i = 0; i < p.manager.size(); i++) {
         ProbeManager *const mgr(p.manager[i]->getProbeManager());
-        listeners.push_back(mgr->connect<PacketListener>(*this, p.probe_name));
+        listeners[i].reset(new PacketListener(*this, mgr, p.probe_name));
     }
 }
 

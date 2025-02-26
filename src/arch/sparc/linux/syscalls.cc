@@ -1,15 +1,4 @@
 /*
- * Copyright (c) 2024 Arm Limited
- *
- * The license below extends only to copyright in the software and shall
- * not be construed as granting a license to any other intellectual
- * property including but not limited to intellectual property relating
- * to a hardware implementation of the functionality of the software
- * licensed hereunder.  You may use the software subject to the license
- * terms below provided that you ensure that this notice is replicated
- * unmodified and in its entirety in all distributions of the software,
- * modified or unmodified, in source code or in binary form.
- *
  * Copyright (c) 2003-2005 The Regents of The University of Michigan
  * All rights reserved.
  *
@@ -115,7 +104,7 @@ SyscallDescTable<SEWorkload::SyscallABI32> EmuLinux::syscall32Descs = {
     {  16, "lchown" }, // 32 bit
     {  17, "brk", brkFunc },
     {  18, "perfctr" }, // 32 bit
-    {  19, "lseek", lseekFunc<Sparc32Linux> }, // 32 bit
+    {  19, "lseek", lseekFunc }, // 32 bit
     {  20, "getpid", getpidFunc },
     {  21, "capget" },
     {  22, "capset" },
@@ -215,7 +204,7 @@ SyscallDescTable<SEWorkload::SyscallABI32> EmuLinux::syscall32Descs = {
     { 116, "gettimeofday", gettimeofdayFunc<Sparc32Linux> }, // 32 bit
     { 117, "getrusage" }, // 32 bit
     { 118, "getsockopt" },
-    { 119, "getcwd", getcwdFunc<Sparc32Linux> },
+    { 119, "getcwd", getcwdFunc },
     { 120, "readv" },
     { 121, "writev" },
     { 122, "settimeofday" }, // 32 bit
@@ -338,7 +327,7 @@ SyscallDescTable<SEWorkload::SyscallABI32> EmuLinux::syscall32Descs = {
     { 239, "mlockall" }, // 32 bit
     { 240, "munlockall" },
     { 241, "sched_setparam" }, // 32 bit
-    { 242, "sched_getparam", sched_getparamFunc }, // 32 bit
+    { 242, "sched_getparam" }, // 32 bit
     { 243, "sched_setscheduler" }, // 32 bit
     { 244, "sched_getscheduler" }, // 32 bit
     { 245, "sched_yield" },
@@ -418,7 +407,7 @@ SyscallDescTable<SEWorkload::SyscallABI64> EmuLinux::syscallDescs = {
     { 16, "lchown" },
     { 17, "brk", brkFunc },
     { 18, "perfctr" },
-    { 19, "lseek", lseekFunc<SparcLinux> },
+    { 19, "lseek", lseekFunc },
     { 20, "getpid", getpidFunc },
     { 21, "capget" },
     { 22, "capset" },
@@ -641,7 +630,7 @@ SyscallDescTable<SEWorkload::SyscallABI64> EmuLinux::syscallDescs = {
     { 239, "mlockall" },
     { 240, "munlockall" },
     { 241, "sched_setparam" },
-    { 242, "sched_getparam", sched_getparamFunc },
+    { 242, "sched_getparam" },
     { 243, "sched_setscheduler" },
     { 244, "sched_getscheduler" },
     { 245, "sched_yield" },

@@ -96,7 +96,6 @@ class ArmExtension(ScopedEnum):
         "FEAT_TLBIRANGE",
         "FEAT_FLAGM",
         "FEAT_IDST",
-        "FEAT_TTST",
         # Armv8.5
         "FEAT_FLAGM2",
         "FEAT_RNG",
@@ -106,11 +105,9 @@ class ArmExtension(ScopedEnum):
         "FEAT_FGT",
         # Armv8.7
         "FEAT_HCX",
-        "FEAT_XS",
         # Armv8.9
         "FEAT_SCTLR2",
         "FEAT_TCR2",
-        "FEAT_S1PIE",
         # Armv9.2
         "FEAT_SME",  # Optional in Armv9.2
         # Others
@@ -206,7 +203,6 @@ class ArmDefaultRelease(Armv8):
         "FEAT_TLBIRANGE",
         "FEAT_FLAGM",
         "FEAT_IDST",
-        "FEAT_TTST",
         # Armv8.5
         "FEAT_FLAGM2",
         "FEAT_EVT",
@@ -214,7 +210,6 @@ class ArmDefaultRelease(Armv8):
         "FEAT_FGT",
         # Armv8.7
         "FEAT_HCX",
-        "FEAT_XS",
         # Armv9.2
         "FEAT_SME",
     ]
@@ -255,7 +250,6 @@ class Armv84(Armv83):
         "FEAT_TLBIRANGE",
         "FEAT_FLAGM",
         "FEAT_IDST",
-        "FEAT_TTST",
     ]
 
 
@@ -277,12 +271,11 @@ class Armv86(Armv85):
 class Armv87(Armv86):
     extensions = Armv86.extensions + [
         "FEAT_HCX",
-        "FEAT_XS",
     ]
 
 
 class Armv89(Armv87):
-    extensions = Armv87.extensions + ["FEAT_SCTLR2", "FEAT_TCR2", "FEAT_S1PIE"]
+    extensions = Armv87.extensions + ["FEAT_SCTLR2", "FEAT_TCR2"]
 
 
 class Armv92(Armv89):

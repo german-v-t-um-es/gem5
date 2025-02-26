@@ -58,10 +58,8 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             if (isFlat()) {
                 wf->decLGKMInstsIssued();
-                wf->untrackLGKMInst(gpuDynInst);
             }
             return;
         }
@@ -116,10 +114,8 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             if (isFlat()) {
                 wf->decLGKMInstsIssued();
-                wf->untrackLGKMInst(gpuDynInst);
             }
             return;
         }
@@ -174,10 +170,8 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             if (isFlat()) {
                 wf->decLGKMInstsIssued();
-                wf->untrackLGKMInst(gpuDynInst);
             }
             return;
         }
@@ -263,10 +257,8 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             if (isFlat()) {
                 wf->decLGKMInstsIssued();
-                wf->untrackLGKMInst(gpuDynInst);
             }
             return;
         }
@@ -322,10 +314,8 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             if (isFlat()) {
                 wf->decLGKMInstsIssued();
-                wf->untrackLGKMInst(gpuDynInst);
             }
             return;
         }
@@ -342,33 +332,21 @@ namespace VegaISA
     void
     Inst_FLAT__FLAT_LOAD_DWORDX2::initiateAcc(GPUDynInstPtr gpuDynInst)
     {
-        initMemRead<2>(gpuDynInst);
+        initMemRead<VecElemU64>(gpuDynInst);
     } // initiateAcc
 
     void
     Inst_FLAT__FLAT_LOAD_DWORDX2::completeAcc(GPUDynInstPtr gpuDynInst)
     {
-        VecOperandU32 vdst0(gpuDynInst, extData.VDST);
-        VecOperandU32 vdst1(gpuDynInst, extData.VDST + 1);
+        VecOperandU64 vdst(gpuDynInst, extData.VDST);
 
         for (int lane = 0; lane < NumVecElemPerVecReg; ++lane) {
-            if (gpuDynInst->exec_mask[lane] && !isFlatScratch()) {
-                vdst0[lane] = (reinterpret_cast<VecElemU32*>(
-                    gpuDynInst->d_data))[lane * 2];
-                vdst1[lane] = (reinterpret_cast<VecElemU32*>(
-                    gpuDynInst->d_data))[lane * 2 + 1];
-            } else if (gpuDynInst->exec_mask[lane] && isFlatScratch()) {
-                // Unswizzle the data opposite of swizzleData. See swizzleData
-                // in src/arch/amdgpu/vega/insts/op_encodings.hh for details.
-                vdst0[lane] = (reinterpret_cast<VecElemU32*>(
+            if (gpuDynInst->exec_mask[lane]) {
+                vdst[lane] = (reinterpret_cast<VecElemU64*>(
                     gpuDynInst->d_data))[lane];
-                vdst1[lane] = (reinterpret_cast<VecElemU32*>(
-                    gpuDynInst->d_data))[lane + NumVecElemPerVecReg];
             }
         }
-
-        vdst0.write();
-        vdst1.write();
+        vdst.write();
     } // completeAcc
     // --- Inst_FLAT__FLAT_LOAD_DWORDX3 class methods ---
 
@@ -393,10 +371,8 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             if (isFlat()) {
                 wf->decLGKMInstsIssued();
-                wf->untrackLGKMInst(gpuDynInst);
             }
             return;
         }
@@ -424,22 +400,13 @@ namespace VegaISA
         VecOperandU32 vdst2(gpuDynInst, extData.VDST + 2);
 
         for (int lane = 0; lane < NumVecElemPerVecReg; ++lane) {
-            if (gpuDynInst->exec_mask[lane] && !isFlatScratch()) {
+            if (gpuDynInst->exec_mask[lane]) {
                 vdst0[lane] = (reinterpret_cast<VecElemU32*>(
                     gpuDynInst->d_data))[lane * 3];
                 vdst1[lane] = (reinterpret_cast<VecElemU32*>(
                     gpuDynInst->d_data))[lane * 3 + 1];
                 vdst2[lane] = (reinterpret_cast<VecElemU32*>(
                     gpuDynInst->d_data))[lane * 3 + 2];
-            } else if (gpuDynInst->exec_mask[lane] && isFlatScratch()) {
-                // Unswizzle the data opposite of swizzleData. See swizzleData
-                // in src/arch/amdgpu/vega/insts/op_encodings.hh for details.
-                vdst0[lane] = (reinterpret_cast<VecElemU32*>(
-                    gpuDynInst->d_data))[lane];
-                vdst1[lane] = (reinterpret_cast<VecElemU32*>(
-                    gpuDynInst->d_data))[lane + NumVecElemPerVecReg];
-                vdst2[lane] = (reinterpret_cast<VecElemU32*>(
-                    gpuDynInst->d_data))[lane + 2*NumVecElemPerVecReg];
             }
         }
 
@@ -470,10 +437,8 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             if (isFlat()) {
                 wf->decLGKMInstsIssued();
-                wf->untrackLGKMInst(gpuDynInst);
             }
             return;
         }
@@ -502,7 +467,7 @@ namespace VegaISA
         VecOperandU32 vdst3(gpuDynInst, extData.VDST + 3);
 
         for (int lane = 0; lane < NumVecElemPerVecReg; ++lane) {
-            if (gpuDynInst->exec_mask[lane] && !isFlatScratch()) {
+            if (gpuDynInst->exec_mask[lane]) {
                 vdst0[lane] = (reinterpret_cast<VecElemU32*>(
                     gpuDynInst->d_data))[lane * 4];
                 vdst1[lane] = (reinterpret_cast<VecElemU32*>(
@@ -511,17 +476,6 @@ namespace VegaISA
                     gpuDynInst->d_data))[lane * 4 + 2];
                 vdst3[lane] = (reinterpret_cast<VecElemU32*>(
                     gpuDynInst->d_data))[lane * 4 + 3];
-            } else if (gpuDynInst->exec_mask[lane] && isFlatScratch()) {
-                // Unswizzle the data opposite of swizzleData. See swizzleData
-                // in src/arch/amdgpu/vega/insts/op_encodings.hh for details.
-                vdst0[lane] = (reinterpret_cast<VecElemU32*>(
-                    gpuDynInst->d_data))[lane];
-                vdst1[lane] = (reinterpret_cast<VecElemU32*>(
-                    gpuDynInst->d_data))[lane + NumVecElemPerVecReg];
-                vdst2[lane] = (reinterpret_cast<VecElemU32*>(
-                    gpuDynInst->d_data))[lane + 2*NumVecElemPerVecReg];
-                vdst3[lane] = (reinterpret_cast<VecElemU32*>(
-                    gpuDynInst->d_data))[lane + 3*NumVecElemPerVecReg];
             }
         }
 
@@ -552,13 +506,10 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             if (isFlat()) {
                 wf->decLGKMInstsIssued();
-                wf->untrackLGKMInst(gpuDynInst);
             }
             wf->decExpInstsIssued();
-            wf->untrackExpInst(gpuDynInst);
             return;
         }
 
@@ -614,13 +565,10 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             if (isFlat()) {
                 wf->decLGKMInstsIssued();
-                wf->untrackLGKMInst(gpuDynInst);
             }
             wf->decExpInstsIssued();
-            wf->untrackExpInst(gpuDynInst);
             return;
         }
 
@@ -677,13 +625,10 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             if (isFlat()) {
                 wf->decLGKMInstsIssued();
-                wf->untrackLGKMInst(gpuDynInst);
             }
             wf->decExpInstsIssued();
-            wf->untrackExpInst(gpuDynInst);
             return;
         }
 
@@ -739,13 +684,10 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             if (isFlat()) {
                 wf->decLGKMInstsIssued();
-                wf->untrackLGKMInst(gpuDynInst);
             }
             wf->decExpInstsIssued();
-            wf->untrackExpInst(gpuDynInst);
             return;
         }
 
@@ -802,13 +744,10 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             if (isFlat()) {
                 wf->decLGKMInstsIssued();
-                wf->untrackLGKMInst(gpuDynInst);
             }
             wf->decExpInstsIssued();
-            wf->untrackExpInst(gpuDynInst);
             return;
         }
 
@@ -835,7 +774,7 @@ namespace VegaISA
     void
     Inst_FLAT__FLAT_STORE_DWORDX2::initiateAcc(GPUDynInstPtr gpuDynInst)
     {
-        initMemWrite<2>(gpuDynInst);
+        initMemWrite<VecElemU64>(gpuDynInst);
     } // initiateAcc
 
     void
@@ -865,13 +804,10 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             if (isFlat()) {
                 wf->decLGKMInstsIssued();
-                wf->untrackLGKMInst(gpuDynInst);
             }
             wf->decExpInstsIssued();
-            wf->untrackExpInst(gpuDynInst);
             return;
         }
 
@@ -936,13 +872,10 @@ namespace VegaISA
 
         if (gpuDynInst->exec_mask.none()) {
             wf->decVMemInstsIssued();
-            wf->untrackVMemInst(gpuDynInst);
             if (isFlat()) {
                 wf->decLGKMInstsIssued();
-                wf->untrackLGKMInst(gpuDynInst);
             }
             wf->decExpInstsIssued();
-            wf->untrackExpInst(gpuDynInst);
             return;
         }
 

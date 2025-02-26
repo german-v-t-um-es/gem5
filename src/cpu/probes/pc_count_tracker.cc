@@ -54,8 +54,8 @@ PcCountTracker::regProbeListeners()
     // when "RetiredInstsPC" notifies the probe listener, then the function
     // 'check_pc' is automatically called
     typedef ProbeListenerArg<PcCountTracker, Addr> PcCountTrackerListener;
-    connectListener<PcCountTrackerListener>(this, "RetiredInstsPC",
-                                            &PcCountTracker::checkPc);
+    listeners.push_back(new PcCountTrackerListener(this, "RetiredInstsPC",
+                                            &PcCountTracker::checkPc));
 }
 
 void

@@ -552,11 +552,6 @@ for variant_path in variant_paths:
         env.Append(CCFLAGS=['-pipe'])
         env.Append(CCFLAGS=['-fno-strict-aliasing'])
 
-        # Enable -Wall and -Wextra and then disable the few warnings that
-        # we consistently violate
-        env.Append(CCFLAGS=['-Wall', '-Wundef', '-Wextra',
-                            '-Wno-sign-compare', '-Wno-unused-parameter'])
-
         # We always compile using C++17
         env.Append(CXXFLAGS=['-std=c++17'])
 
@@ -691,25 +686,6 @@ for variant_path in variant_paths:
             env.Append(CXXFLAGS=['-stdlib=libc++'])
             env.Append(LIBS=['c++'])
 
-    if sys.platform == 'cygwin':
-        # cygwin has some header file issues...
-        env.Append(CCFLAGS=["-Wno-uninitialized"])
-
-
-    if not GetOption('no_compress_debug'):
-        with gem5_scons.Configure(env) as conf:
-            if not conf.CheckCxxFlag('-gz'):
-                warning("Can't enable object file debug section compression")
-            if not conf.CheckLinkFlag('-gz'):
-                warning("Can't enable executable debug section compression")
-
-    if env['USE_PYTHON']:
-        config_embedded_python(env)
-        gem5py_env = env.Clone()
-    else:
-        gem5py_env = env.Clone()
-        config_embedded_python(gem5py_env)
-
     # Add sanitizers flags
     sanitizers=[]
     if GetOption('with_ubsan'):
@@ -779,6 +755,25 @@ for variant_path in variant_paths:
         else:
             warning("Don't know how to enable %s sanitizer(s) for your "
                     "compiler." % sanitizers)
+
+    if sys.platform == 'cygwin':
+        # cygwin has some header file issues...
+        env.Append(CCFLAGS=["-Wno-uninitialized"])
+
+
+    if not GetOption('no_compress_debug'):
+        with gem5_scons.Configure(env) as conf:
+            if not conf.CheckCxxFlag('-gz'):
+                warning("Can't enable object file debug section compression")
+            if not conf.CheckLinkFlag('-gz'):
+                warning("Can't enable executable debug section compression")
+
+    if env['USE_PYTHON']:
+        config_embedded_python(env)
+        gem5py_env = env.Clone()
+    else:
+        gem5py_env = env.Clone()
+        config_embedded_python(gem5py_env)
 
     # Bare minimum environment that only includes python
     gem5py_env.Append(CCFLAGS=['${GEM5PY_CCFLAGS_EXTRA}'])

@@ -191,7 +191,6 @@ simulate(Tick num_cycles)
     // install the sigint handler to catch ctrl-c and exit the sim loop cleanly
     // Note: This should be done before initializing the threads
     initSigInt();
-    initSigRtmin();
 
     if (global_exit_event)//cleaning last global exit event
         global_exit_event->clean();

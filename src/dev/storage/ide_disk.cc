@@ -64,8 +64,7 @@ namespace gem5
 {
 
 IdeDisk::IdeDisk(const Params &p)
-    : SimObject(p), image(p.image), diskDelay(p.delay), dataBuffer(nullptr),
-      ideDiskStats(this),
+    : SimObject(p), image(p.image), diskDelay(p.delay), ideDiskStats(this),
       dmaTransferEvent([this]{ doDmaTransfer(); }, name()),
       dmaReadWaitEvent([this]{ doDmaRead(); }, name()),
       dmaWriteWaitEvent([this]{ doDmaWrite(); }, name()),
@@ -146,9 +145,7 @@ void
 IdeDisk::reset(int id)
 {
     // initialize the data buffer and shadow registers
-    // if the data buffer has not been allocated yet
-    if (!dataBuffer)
-        dataBuffer = new uint8_t[MAX_DMA_SIZE];
+    dataBuffer = new uint8_t[MAX_DMA_SIZE];
 
     memset(dataBuffer, 0, MAX_DMA_SIZE);
     memset(&cmdReg, 0, sizeof(CommandReg_t));

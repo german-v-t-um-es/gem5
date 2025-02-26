@@ -25,9 +25,5 @@
 
 Import('*')
 
-Source('logging.cc', tags=('gtest lib', 'gtest logging'), tag_gem5_lib=False)
-Source(
-    'logging_mock.cc',
-    tags=('gtest lib', 'gtest logging'),
-    tag_gem5_lib=False
-)
+Source('logging.cc', tags=('gtest lib', 'gtest logging'))
+Source('logging_mock.cc', tags=('gtest lib', 'gtest logging'))

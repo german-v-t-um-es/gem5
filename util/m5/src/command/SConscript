@@ -39,8 +39,7 @@ command_ccs = [
     'resetstats.cc',
     'writefile.cc',
     'workbegin.cc',
-    'workend.cc',
-    'hypercall.cc',
+    'workend.cc'
 ]
 
 command_objs = list(map(env.StaticObject, command_ccs))

@@ -85,7 +85,6 @@ ScalarMemPipeline::exec()
 
         m->completeAcc(m);
         w->decLGKMInstsIssued();
-        w->untrackLGKMInst(m);
 
         if (m->isLoad() || m->isAtomic()) {
             returnedLoads.pop();
@@ -242,13 +241,6 @@ ScalarMemPipeline::injectScalarMemFence(GPUDynInstPtr gpuDynInst,
             (computeUnit.scalarDataPort, scalar_pkt);
     computeUnit.schedule(
             scalar_event, curTick() + computeUnit.scalar_req_tick_latency);
-}
-
-void
-ScalarMemPipeline::printProgress()
-{
-    std::cout << "Scalar issued: " << issuedRequests.size() << " returned: "
-              << returnedLoads.size() << "/" << returnedStores.size() << "\n";
 }
 
 } // namespace gem5

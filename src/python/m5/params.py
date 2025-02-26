@@ -231,7 +231,7 @@ class ParamDesc:
         return self.ptype(value).pretty_print(value)
 
     def cxx_predecls(self, code):
-        code("#include <cstddef>", add_once=True)
+        code("#include <cstddef>")
         self.ptype.cxx_predecls(code)
 
     def pybind_predecls(self, code):
@@ -405,11 +405,11 @@ class VectorParamDesc(ParamDesc):
         return VectorParamValue(tmp_list)
 
     def cxx_predecls(self, code):
-        code("#include <vector>", add_once=True)
+        code("#include <vector>")
         self.ptype.cxx_predecls(code)
 
     def pybind_predecls(self, code):
-        code("#include <vector>", add_once=True)
+        code("#include <vector>")
         self.ptype.pybind_predecls(code)
 
     def cxx_decl(self, code):
@@ -463,7 +463,7 @@ class String(ParamValue, str):
 
     @classmethod
     def cxx_predecls(self, code):
-        code("#include <string>", add_once=True)
+        code("#include <string>")
 
     def __call__(self, value):
         self = value
@@ -565,7 +565,7 @@ class NumericParamValue(ParamValue):
     @classmethod
     def cxx_ini_predecls(cls, code):
         # Assume that base/str.hh will be included anyway
-        # code('#include "base/str.hh"', add_once=True)
+        # code('#include "base/str.hh"')
         pass
 
     # The default for parsing PODs from an .ini entry is to extract from an
@@ -637,7 +637,7 @@ class CheckedInt(NumericParamValue, metaclass=CheckedIntType):
     @classmethod
     def cxx_predecls(cls, code):
         # most derived types require this, so we just do it here once
-        code('#include "base/types.hh"', add_once=True)
+        code('#include "base/types.hh"')
 
     def getValue(self):
         return int(self.value)
@@ -746,7 +746,7 @@ class Cycles(CheckedInt):
     @classmethod
     def cxx_ini_predecls(cls, code):
         # Assume that base/str.hh will be included anyway
-        # code('#include "base/str.hh"', add_once=True)
+        # code('#include "base/str.hh"')
         pass
 
     @classmethod
@@ -782,7 +782,7 @@ class Float(ParamValue, float):
 
     @classmethod
     def cxx_ini_predecls(cls, code):
-        code("#include <sstream>", add_once=True)
+        code("#include <sstream>")
 
     @classmethod
     def cxx_ini_parse(self, code, src, dest, ret):
@@ -887,11 +887,11 @@ class PcCountPair(ParamValue):
 
     @classmethod
     def cxx_predecls(cls, code):
-        code('#include "cpu/probes/pc_count_pair.hh"', add_once=True)
+        code('#include "cpu/probes/pc_count_pair.hh"')
 
     @classmethod
     def pybind_predecls(cls, code):
-        code('#include "cpu/probes/pc_count_pair.hh"', add_once=True)
+        code('#include "cpu/probes/pc_count_pair.hh"')
 
 
 class AddrRange(ParamValue):
@@ -981,18 +981,18 @@ class AddrRange(ParamValue):
     @classmethod
     def cxx_predecls(cls, code):
         Addr.cxx_predecls(code)
-        code('#include "base/addr_range.hh"', add_once=True)
+        code('#include "base/addr_range.hh"')
 
     @classmethod
     def pybind_predecls(cls, code):
         Addr.pybind_predecls(code)
-        code('#include "base/addr_range.hh"', add_once=True)
+        code('#include "base/addr_range.hh"')
 
     @classmethod
     def cxx_ini_predecls(cls, code):
-        code("#include <sstream>", add_once=True)
-        code("#include <vector>", add_once=True)
-        code('#include "base/types.hh"', add_once=True)
+        code("#include <sstream>")
+        code("#include <vector>")
+        code('#include "base/types.hh"')
 
     @classmethod
     def cxx_ini_parse(cls, code, src, dest, ret):
@@ -1082,7 +1082,7 @@ class Bool(ParamValue):
     @classmethod
     def cxx_ini_predecls(cls, code):
         # Assume that base/str.hh will be included anyway
-        # code('#include "base/str.hh"', add_once=True)
+        # code('#include "base/str.hh"')
         pass
 
     @classmethod
@@ -1095,7 +1095,7 @@ class HostSocket(ParamValue):
 
     @classmethod
     def cxx_predecls(cls, code):
-        code('#include "base/socket.hh"', add_once=True)
+        code('#include "base/socket.hh"')
 
     def __init__(self, value):
         if isinstance(value, HostSocket):
@@ -1144,7 +1144,7 @@ class HostSocket(ParamValue):
 
     @classmethod
     def cxx_ini_predecls(cls, code):
-        code('#include "base/socket.hh"', add_once=True)
+        code('#include "base/socket.hh"')
 
     @classmethod
     def cxx_ini_parse(cls, code, src, dest, ret):
@@ -1182,7 +1182,7 @@ class EthernetAddr(ParamValue):
 
     @classmethod
     def cxx_predecls(cls, code):
-        code('#include "base/inet.hh"', add_once=True)
+        code('#include "base/inet.hh"')
 
     def __init__(self, value):
         if value == NextEthernetAddr:
@@ -1237,7 +1237,7 @@ class IpAddress(ParamValue):
 
     @classmethod
     def cxx_predecls(cls, code):
-        code('#include "base/inet.hh"', add_once=True)
+        code('#include "base/inet.hh"')
 
     def __init__(self, value):
         if isinstance(value, IpAddress):
@@ -1291,7 +1291,7 @@ class IpNetmask(IpAddress):
 
     @classmethod
     def cxx_predecls(cls, code):
-        code('#include "base/inet.hh"', add_once=True)
+        code('#include "base/inet.hh"')
 
     def __init__(self, *args, **kwargs):
         def handle_kwarg(self, kwargs, key, elseVal=None):
@@ -1367,7 +1367,7 @@ class IpWithPort(IpAddress):
 
     @classmethod
     def cxx_predecls(cls, code):
-        code('#include "base/inet.hh"', add_once=True)
+        code('#include "base/inet.hh"')
 
     def __init__(self, *args, **kwargs):
         def handle_kwarg(self, kwargs, key, elseVal=None):
@@ -1488,7 +1488,7 @@ class Time(ParamValue):
 
     @classmethod
     def cxx_predecls(cls, code):
-        code("#include <time.h>", add_once=True)
+        code("#include <time.h>")
 
     def __init__(self, value):
         self.value = parse_time(value)
@@ -1516,7 +1516,7 @@ class Time(ParamValue):
 
     @classmethod
     def cxx_ini_predecls(cls, code):
-        code("#include <time.h>", add_once=True)
+        code("#include <time.h>")
 
     @classmethod
     def cxx_ini_parse(cls, code, src, dest, ret):
@@ -1611,7 +1611,7 @@ class Enum(ParamValue, metaclass=MetaEnum):
 
     @classmethod
     def cxx_predecls(cls, code):
-        code('#include "enums/$0.hh"', cls.__name__, add_once=True)
+        code('#include "enums/$0.hh"', cls.__name__)
 
     @classmethod
     def cxx_ini_parse(cls, code, src, dest, ret):
@@ -1635,13 +1635,6 @@ class Enum(ParamValue, metaclass=MetaEnum):
 
     def __str__(self):
         return self.value
-
-    def __eq__(self, __o: object) -> bool:
-        """Checks if two enum values are the same."""
-        return type(self) == type(__o) and self.value == __o.value
-
-    def __hash__(self):
-        return hash(self.value)
 
 
 # This param will generate a scoped c++ enum and its python bindings.
@@ -1679,7 +1672,7 @@ class TickParamValue(NumericParamValue):
 
     @classmethod
     def cxx_predecls(cls, code):
-        code('#include "base/types.hh"', add_once=True)
+        code('#include "base/types.hh"')
 
     def __call__(self, value):
         self.__init__(value)
@@ -1690,7 +1683,7 @@ class TickParamValue(NumericParamValue):
 
     @classmethod
     def cxx_ini_predecls(cls, code):
-        code("#include <sstream>", add_once=True)
+        code("#include <sstream>")
 
     # Ticks are expressed in seconds in JSON files and in plain
     # Ticks in .ini files.  Switch based on a config flag
@@ -1887,12 +1880,12 @@ class Temperature(ParamValue):
 
     @classmethod
     def cxx_predecls(cls, code):
-        code('#include "base/temperature.hh"', add_once=True)
+        code('#include "base/temperature.hh"')
 
     @classmethod
     def cxx_ini_predecls(cls, code):
         # Assume that base/str.hh will be included anyway
-        # code('#include "base/str.hh"', add_once=True)
+        # code('#include "base/str.hh"')
         pass
 
     @classmethod
@@ -1937,7 +1930,7 @@ class NetworkBandwidth(float, ParamValue):
 
     @classmethod
     def cxx_ini_predecls(cls, code):
-        code("#include <sstream>", add_once=True)
+        code("#include <sstream>")
 
     @classmethod
     def cxx_ini_parse(self, code, src, dest, ret):
@@ -1976,7 +1969,7 @@ class MemoryBandwidth(float, ParamValue):
 
     @classmethod
     def cxx_ini_predecls(cls, code):
-        code("#include <sstream>", add_once=True)
+        code("#include <sstream>")
 
     @classmethod
     def cxx_ini_parse(self, code, src, dest, ret):

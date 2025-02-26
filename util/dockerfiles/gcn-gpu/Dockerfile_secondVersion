@@ -36,7 +36,7 @@ RUN apt -y update && \
     libprotobuf-dev protobuf-compiler libprotoc-dev libgoogle-perftools-dev \
     python3-dev python-is-python3 doxygen libboost-all-dev \
     libhdf5-serial-dev python3-pydot libpng-dev libelf-dev pkg-config gdb \
-    cmake wget gnupg2 rpm \
+    wget gnupg2 rpm \
     # Requirements for ROCm
     mesa-common-dev libgflags-dev libgoogle-glog-dev \
     # ROCm dependencies and requirements to get ROCm repo and build packages.
@@ -48,6 +48,21 @@ RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100 && \
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 && \
     update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-10 100 && \
     update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-10 100
+
+# Specify HIP Architectures for CMake
+ENV HIP_ARCHITECTURES=gfx900,gfx902
+# ENV HCC_AMDGPU_TARGET=gfx900,gfx902
+
+# Newer version of CMake (3.28)
+RUN apt install libssl-dev && \
+    wget https://github.com/Kitware/CMake/releases/download/v3.28.0/cmake-3.28.0.tar.gz && \
+    tar -xzvf cmake-3.28.0.tar.gz && \
+    cd cmake-3.28.0 && \
+    ./bootstrap && \
+    make && \
+    make install && \
+    cd / && \
+    rm -rf cmake-3.28.0.tar.gz
 
 # Add the ROCm apt key.
 RUN wget -q -O - https://repo.radeon.com/rocm/rocm.gpg.key | apt-key add -
@@ -72,7 +87,7 @@ RUN git clone -b rocm-4.0.0 --depth=1 \
     mkdir -p /ROCR-Runtime/src/build && \
     cd /ROCR-Runtime/src/build && \
     # We need MEMFD_CREATE=OFF as MEMFD_CREATE syscall isn't implemented.
-    cmake -DIMAGE_SUPPORT=OFF -DHAVE_MEMFD_CREATE=OFF -DCMAKE_BUILD_TYPE=Release .. && \
+    cmake -DIMAGE_SUPPORT=OFF -DCMAKE_HIP_ARCHITECTURES=${HIP_ARCHITECTURES} -DHAVE_MEMFD_CREATE=OFF -DCMAKE_BUILD_TYPE=Release .. && \
     make -j$(nproc) && \
     make package && \
     apt -y install ./hsa-rocr-dev*.deb && \
@@ -103,6 +118,7 @@ RUN git clone -b rocm-4.0.0 --depth=1 \
     cd /ROCclr/build && \
     cmake \
         -DOPENCL_DIR="/ROCm-OpenCL-Runtime" \
+        -DCMAKE_HIP_ARCHITECTURES=${HIP_ARCHITECTURES} \
         -DCMAKE_BUILD_TYPE=Release ..  && \
     make -j$(nproc) && \
     make install && \
@@ -119,6 +135,7 @@ RUN git clone -b rocm-4.0.0 --depth=1 \
     cmake \
         -DUSE_COMGR_LIBRARY=ON \
         -DCMAKE_PREFIX_PATH="/opt/rocm" \
+        -DCMAKE_HIP_ARCHITECTURES=${HIP_ARCHITECTURES} \
         -DCMAKE_BUILD_TYPE=Release .. && \
     make -j$(nproc) && \
     make package && \
@@ -129,6 +146,7 @@ RUN git clone -b rocm-4.0.0 --depth=1 \
     cd /HIP/build && \
     cmake \
         -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_HIP_ARCHITECTURES=${HIP_ARCHITECTURES} \
         -DHSA_PATH=/usr/hsa \
         -DHIP_COMPILER=clang \
         -DHIP_PLATFORM=rocclr \
@@ -136,8 +154,8 @@ RUN git clone -b rocm-4.0.0 --depth=1 \
     make -j$(nproc) && \
     make package && \
     apt -y install ./hip-base*.deb ./hip-rocclr*.deb && \
-    cp -r /HIP/build/rocclr/CMakeFiles/Export/_opt/rocm/hip/lib/cmake/hip/* \
-          /opt/rocm/hip/lib/cmake/hip/ && \
+    # cp -r /HIP/build/rocclr/CMakeFiles/Export/_opt/rocm/hip/lib/cmake/hip/* \
+    #       /opt/rocm/hip/lib/cmake/hip/ && \
     # Cleanup.
     cd / && \
     rm -rf /HIP /ROCclr /ROCm-OpenCL-Runtime
@@ -147,7 +165,6 @@ RUN git clone -b rocm-4.0.0 --depth=1 \
 # Sources and build files are deleted after the install.
 # rocBLAS needs to be built from source otherwise certain gfx versions get errors in HIP
 # about there being no GPU binary available
-ENV HCC_AMDGPU_TARGET=gfx900,gfx902
 # RUN git clone -b rocm-4.0.0 --depth=1 \
 #         https://github.com/ROCmSoftwarePlatform/rocBLAS.git && \
 #     # rocBLAS downloads the most recent rocm-cmake if it isn't installed before
@@ -177,6 +194,27 @@ RUN ln -s /root/.cache/miopen/2.9.0.8252-rocm-rel-4.0-26-64506314 \
 # Add commands from halofinder Dockerfile
 RUN apt -y update && \
     apt -y install libopenmpi-dev libomp-dev
+
+# Install dependencies for Hetero-Mark
+RUN apt -y install libopencv-dev
+
+# Install dependencies for QEMU
+RUN apt -y install python3-venv pip flex bison \
+    qemu qemu-kvm qemu-system-x86
+RUN pip install tomli ninja meson
+RUN tar -xf glib-2.66.8.tar.xz && \
+    cd glib-2.66.8 && \
+    meson _build && \
+    ninja -C _build && \
+    ninja -C _build install
+
+# # Install other needed packages
+# RUN apt -y install unzip 
+# RUN wget https://download.qemu.org/qemu-9.2.0.tar.xz  && \
+#     tar xvJf qemu-9.2.0.tar.xz  && \
+#     cd qemu-9.2.0  && \
+#     ./configure  && \
+#     make
 
 ENV HIPCC_BIN=/opt/rocm/bin
 ENV MPI_INCLUDE=/usr/lib/x86_64-linux-gnu/openmpi/include

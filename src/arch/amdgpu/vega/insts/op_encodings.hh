@@ -40,6 +40,8 @@
 #include "debug/VEGA.hh"
 #include "mem/ruby/system/RubySystem.hh"
 
+#include "debug/GermanTraces.hh"
+
 namespace gem5
 {
 
@@ -885,6 +887,7 @@ namespace VegaISA
             // exec_mask set and are not out of bounds.
             VectorMask old_exec_mask = gpuDynInst->exec_mask;
             gpuDynInst->exec_mask &= ~oobMask;
+            DPRINTF(GermanTraces, "initMemRead (typename T): %#x\n", gpuDynInst->disassemble());
             initMemReqHelper<T, 1>(gpuDynInst, MemCmd::ReadReq);
             gpuDynInst->exec_mask = old_exec_mask;
         }
@@ -899,6 +902,7 @@ namespace VegaISA
             // exec_mask set and are not out of bounds.
             VectorMask old_exec_mask = gpuDynInst->exec_mask;
             gpuDynInst->exec_mask &= ~oobMask;
+            DPRINTF(GermanTraces, "initMemRead (int N): %#x\n", gpuDynInst->disassemble());
             initMemReqHelper<VecElemU32, N>(gpuDynInst, MemCmd::ReadReq);
             gpuDynInst->exec_mask = old_exec_mask;
         }

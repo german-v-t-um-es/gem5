@@ -1,0 +1,135 @@
+# Copyright (c) 2021 Kyle Roarty
+# All Rights Reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met: redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer;
+# redistributions in binary form must reproduce the above copyright
+# notice, this list of conditions and the following disclaimer in the
+# documentation and/or other materials provided with the distribution;
+# neither the name of the copyright holders nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# Changing ubuntu version to support newer ROCm
+FROM --platform=${BUILDPLATFORM} ubuntu:20.04
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt -y update && \
+    apt -y install \
+    # General gem5 requirements when building/running in Ubuntu 20.04, also
+    # some utilities needed to compile and obtain the right packages that
+    # make up this Docker image.
+    build-essential git m4 scons zlib1g zlib1g-dev \
+    libprotobuf-dev protobuf-compiler libprotoc-dev libgoogle-perftools-dev \
+    python3-dev python-is-python3 doxygen libboost-all-dev \
+    libhdf5-serial-dev python3-pydot libpng-dev libelf-dev pkg-config gdb \
+    wget gnupg2 rpm \
+    # Requirements for ROCm
+    mesa-common-dev libgflags-dev libgoogle-glog-dev \
+    # ROCm dependencies and requirements to get ROCm repo and build packages.
+    # Upgrade to gcc 10: gem5 supports gcc 10+.
+    gcc-10 g++-10 cpp-10
+
+# Update the default compiler to gcc 10
+RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100 && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 && \
+    update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-10 100 && \
+    update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-10 100
+
+# Newer version of CMake (3.28)
+RUN apt install libssl-dev && \
+    wget https://github.com/Kitware/CMake/releases/download/v3.28.0/cmake-3.28.0.tar.gz && \
+    tar -xzvf cmake-3.28.0.tar.gz && \
+    cd cmake-3.28.0 && \
+    ./bootstrap && \
+    make && \
+    make install && \
+    cd / && \
+    rm -rf cmake-3.28.0.tar.gz
+
+# Install ROCm repository and add GPG key
+RUN apt update && \
+    mkdir -p /etc/apt/keyrings && \
+    wget -qO - https://repo.radeon.com/rocm/rocm.gpg.key | gpg --dearmor -o /etc/apt/keyrings/rocm.gpg && \
+    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/amdgpu/4.0.0/ubuntu jammy main" \
+    | tee /etc/apt/sources.list.d/amdgpu.list && \
+    apt update && \
+    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/4.0.0 jammy main" \
+    | tee --append /etc/apt/sources.list.d/rocm.list && \
+    echo "Package: *" > /etc/apt/preferences.d/rocm-pin-600 && \
+    echo "Pin: origin repo.radeon.com" >> /etc/apt/preferences.d/rocm-pin-600 && \
+    echo "Pin-Priority: 600" >> /etc/apt/preferences.d/rocm-pin-600 && \
+    apt update && \
+    apt install -y clang llvm-amdgpu amdgpu-dkms rocm && \
+    rm -rf /var/lib/apt/lists/*
+
+# Post-installation of ROCm
+# Append paths to ROCm libraries
+RUN echo "/opt/rocm/lib" >> /etc/ld.so.conf.d/rocm.conf && \
+    echo "/opt/rocm/lib64" >> /etc/ld.so.conf.d/rocm.conf && \
+    ldconfig
+
+# Add commands from halofinder Dockerfile
+RUN apt -y update && \
+    apt -y install libopenmpi-dev libomp-dev
+
+# IMPORTANT
+# ROCm
+ENV LD_LIBRARY_PATH=/opt/rocm-4.0.0/lib
+ENV PATH="/opt/rocm-4.0.0:${PATH}"
+ENV HIP_PATH=/opt/rocm-4.0.0
+# C++
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/gcc/x86_64-linux-gnu
+ENV CPLUS_INCLUDE_PATH=/usr/include/c++/10:/usr/include/x86_64-linux-gnu/c++/10
+# sudo ln -s /usr/lib/gcc/x86_64-linux-gnu/11/libstdc++.so /usr/lib/libstdc++.so
+# HIP
+ENV HIPCC_BIN=/opt/rocm/bin
+
+# ENV HCC_AMDGPU_TARGET=gfx900,gfx902
+
+ENV OMP="-I/usr/lib/llvm-14/lib/cmake/openmp -L/usr/lib/llvm-14/lib -fopenmp"
+
+
+ENV MPI_INCLUDE=/usr/lib/x86_64-linux-gnu/openmpi/include
+ENV OPT="-O3 -g -DRCB_UNTHREADED_BUILD -DUSE_SERIAL_COSMO"
+
+ENV HIPCC_FLAGS="-v -ffast_math -DINLINE_FORCE -I${MPI_INCLUDE}"
+ENV HIPCC_FLAGS="-v -I${MPI_INCLUDE} -I/opt/rocm/include"
+
+ENV HACC_PLATFORM="hip"
+ENV HACC_OBJDIR="${HACC_PLATFORM}"
+
+ENV HACC_CFLAGS="$OPT $OMP $HIPCC_FLAGS"
+ENV HACC_CC="${HIPCC_BIN}/hipcc -x c -Xclang -std=c99"
+
+ENV HACC_CXXFLAGS="$OPT $OMP $HIPCC_FLAGS"
+ENV HACC_CXX="${HIPCC_BIN}/hipcc -Xclang"
+
+ENV HACC_LDFLAGS="-lm -lrt"
+
+# USE_SERIAL_COSMO must be set to avoid building the code with MPI, which isn't
+# supported on the GPU model in gem5.
+ENV USE_SERIAL_COSMO="1"
+ENV HACC_NUM_CUDA_DEV="1"
+ENV HACC_MPI_CFLAGS="$OPT $OMP $HIPCC_FLAGS"
+ENV HACC_MPI_CC="${HIPCC_BIN}/hipcc -x c -Xclang -std=c99 -Xclang -pthread"
+
+ENV HACC_MPI_CXXFLAGS="$OPT $OMP $HIPCC_FLAGS"
+ENV HACC_MPI_CXX="${HIPCC_BIN}/hipcc -Xclang -pthread"
+ENV HACC_MPI_LD="${HIPCC_BIN}/hipcc -Xclang -pthread"
+
+ENV HACC_MPI_LDFLAGS="-lm -lrt"

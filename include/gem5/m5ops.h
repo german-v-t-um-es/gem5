@@ -71,6 +71,9 @@ void m5_work_end(uint64_t workid, uint64_t threadid);
 void m5_roi_begin();
 void m5_roi_end();
 
+// Print Registers
+void m5_dump_regs();
+
 /*
  * Send a very generic poke to the workload so it can do something. It's up to
  * the workload to know what information to look for to interpret an event,

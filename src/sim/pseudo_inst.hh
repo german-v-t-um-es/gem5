@@ -118,6 +118,9 @@ void triggerWorkloadEvent(ThreadContext *tc);
 void m5_roi_begin(ThreadContext *tc);
 void m5_roi_end(ThreadContext *tc);
 
+// Print registers
+void m5_dump_regs(ThreadContext *tc);
+
 /**
  * Execute a decoded M5 pseudo instruction
  *
@@ -260,6 +263,10 @@ pseudoInstWork(ThreadContext *tc, uint8_t func, uint64_t &result)
       
       case M5OP_ROI_END:
         invokeSimcall<ABI>(tc, m5_roi_end);
+        return true;
+
+      case M5OP_DUMP_REGS:
+        invokeSimcall<ABI>(tc, m5_dump_regs);
         return true;
 
       default:

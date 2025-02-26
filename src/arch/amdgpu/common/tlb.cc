@@ -59,6 +59,8 @@
 #include "sim/process.hh"
 #include "sim/pseudo_inst.hh"
 
+#include "debug/GermanTraces.hh"
+
 namespace gem5
 {
 namespace X86ISA
@@ -958,11 +960,11 @@ namespace X86ISA
 
             const EmulationPageTable::Entry *pte = p->pTable->lookup(vaddr);
             if (!pte)
-                DPRINTF(GPUTLB, "A mapping was not found for %#x after first lookup()\n", alignedVaddr);
-            DPRINTF(GPUTLB, "sender_state->tlbMode=%x (R=0/W=1/E=2)\n", sender_state->tlbMode);
+                DPRINTF(GermanTraces, "A mapping was not found for %#x after first lookup()\n", alignedVaddr);
+            DPRINTF(GermanTraces, "sender_state->tlbMode=%x (R=0/W=1/E=2)\n", sender_state->tlbMode);
             if (!pte && sender_state->tlbMode != BaseMMU::Execute &&
                     p->fixupFault(vaddr)) {
-                DPRINTF(GPUTLB, "A mapping was not found for %#x, executing a second lookup\n", alignedVaddr);
+                DPRINTF(GermanTraces, "A mapping was not found for %#x, executing a second lookup\n", alignedVaddr);
                 pte = p->pTable->lookup(vaddr);
             }
 
@@ -974,7 +976,7 @@ namespace X86ISA
                     new TlbEntry(p->pid(), virtPageAddr, pte->paddr, false,
                                  false);
             } else {
-                DPRINTF(GPUTLB, "A mapping was not found for %#x\n", alignedVaddr);
+                DPRINTF(GermanTraces, "A mapping was not found for %#x\n", alignedVaddr);
                 sender_state->tlbEntry = nullptr;
             }
             

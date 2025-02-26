@@ -37,6 +37,8 @@
 #include "debug/GPUMem.hh"
 #include "gpu-compute/gpu_dyn_inst.hh"
 
+#include "debug/GermanTraces.hh"
+
 namespace gem5
 {
 
@@ -113,6 +115,10 @@ initMemReqHelper(GPUDynInstPtr gpuDynInst, MemCmd mem_req_type,
                         "request for %#x\n", gpuDynInst->cu_id,
                         gpuDynInst->simdId, gpuDynInst->wfSlotId, lane,
                         split_addr);
+                DPRINTF(GermanTraces, "CU%d: WF[%d][%d]: index: %d unaligned memory "
+                    "request for %#x\n", gpuDynInst->cu_id,
+                    gpuDynInst->simdId, gpuDynInst->wfSlotId, lane,
+                    split_addr);
                 gpuDynInst->computeUnit()->sendRequest(gpuDynInst, lane, pkt1);
                 gpuDynInst->computeUnit()->sendRequest(gpuDynInst, lane, pkt2);
             } else {
@@ -121,6 +127,10 @@ initMemReqHelper(GPUDynInstPtr gpuDynInst, MemCmd mem_req_type,
                 pkt = new Packet(req, mem_req_type);
                 pkt->dataStatic(&(reinterpret_cast<T*>(
                     gpuDynInst->d_data))[lane * N]);
+                DPRINTF(GermanTraces, "CU%d: WF[%d][%d]: index: %d aligned memory "
+                    "request for %#x\n", gpuDynInst->cu_id,
+                    gpuDynInst->simdId, gpuDynInst->wfSlotId, lane,
+                    split_addr);
                 gpuDynInst->computeUnit()->sendRequest(gpuDynInst, lane, pkt);
             }
         } else { // if lane is not active, then no pending requests

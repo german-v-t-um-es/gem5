@@ -41,7 +41,7 @@
 #include "sim/faults.hh"
 #include "sim/serialize.hh"
 
-#include "debug/GPUTLB.hh"
+#include "debug/GermanTraces.hh"
 
 namespace gem5
 {
@@ -137,7 +137,7 @@ EmulationPageTable::lookup(Addr vaddr)
     Addr page_addr = pageAlign(vaddr);
     PTableItr iter = pTable.find(page_addr);
     if (iter == pTable.end()){
-        // DPRINTF(GPUTLB, "An PTableItr was not found for %x\n", vaddr);
+        // DPRINTF(GermanTraces, "An PTableItr was not found for %x\n", vaddr);
         return nullptr;
     }   
     return &(iter->second);

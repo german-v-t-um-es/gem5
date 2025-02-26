@@ -71,6 +71,10 @@
 #include "sim/stats.hh"
 #include "sim/system.hh"
 
+// Print registers
+#include "debug/GPUTLB.hh"
+#include "arch/x86/regs/int.hh"
+
 namespace gem5
 {
 
@@ -502,6 +506,13 @@ void m5_roi_end(ThreadContext *tc)
     DPRINTF(PseudoInst, "pseudo_inst::m5roiend\n");
     Tick when = curTick() + 0 * sim_clock::as_int::ns;
     exitSimLoop("m5 ROI End", 0, when, 0, true);
+}
+
+void m5_dump_regs(ThreadContext *tc)
+{
+    DPRINTF(PseudoInst, "pseudo_inst::m5dumpregs\n");
+    Tick when = curTick() + 0 * sim_clock::as_int::ns;
+    DPRINTF(GPUTLB, "rbx: %llu", tc->getReg(X86ISA::int_reg::Rbx));
 }
 
 //

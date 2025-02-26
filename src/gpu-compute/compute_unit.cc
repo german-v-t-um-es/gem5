@@ -60,6 +60,8 @@
 #include "sim/process.hh"
 #include "sim/sim_exit.hh"
 
+#include "debug/GermanTraces.hh"
+
 namespace gem5
 {
 
@@ -1277,10 +1279,16 @@ ComputeUnit::sendRequest(GPUDynInstPtr gpuDynInst, PortID index, PacketPtr pkt)
 
             tlbPort[tlbPort_index].retries.push_back(pkt);
         } else {
-           DPRINTF(GPUTLB, "CU%d: WF[%d][%d]: Translation for addr %#x from "
-                   "instruction %s with PC %#x sent!\n", cu_id, gpuDynInst->simdId,
+            DPRINTF(GPUTLB, "CU%d: WF[%d][%d]: Translation for addr %#x from "
+                "instruction %s sent!\n", cu_id, gpuDynInst->simdId,
+                gpuDynInst->wfSlotId, tmp_vaddr,
+                gpuDynInst->disassemble().c_str());
+            DPRINTF(GermanTraces, "CU%d: WF[%d][%d]: Translation for addr %#x from " 
+                   "instruction %s\nPC: %#x, Instruction: %#x!\n", cu_id, gpuDynInst->simdId,
                    gpuDynInst->wfSlotId, tmp_vaddr,
-                   gpuDynInst->disassemble().c_str(), gpuDynInst->pc());
+                   gpuDynInst->disassemble().c_str(), 
+                   gpuDynInst->pc(), gpuDynInst->disassemble());
+            //m5_dump_regs();
         }
     } else {
         if (pkt->cmd == MemCmd::MemSyncReq) {

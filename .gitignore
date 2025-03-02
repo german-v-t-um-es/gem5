@@ -4,6 +4,7 @@ parser.out
 parsetab.py
 cscope.files
 cscope.out
+gem5-resources
 *.pyc
 *~
 .*.swp

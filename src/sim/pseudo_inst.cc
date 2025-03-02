@@ -488,6 +488,22 @@ triggerWorkloadEvent(ThreadContext *tc)
     tc->getSystemPtr()->workload->event(tc);
 }
 
+// ROI incorporation
+
+void m5_roi_begin(ThreadContext *tc)
+{
+    DPRINTF(PseudoInst, "pseudo_inst::m5roibegin\n");
+    Tick when = curTick() + 0 * sim_clock::as_int::ns;
+    exitSimLoop("m5 ROI Begin", 0, when, 0, true);
+}
+
+void m5_roi_end(ThreadContext *tc)
+{
+    DPRINTF(PseudoInst, "pseudo_inst::m5roiend\n");
+    Tick when = curTick() + 0 * sim_clock::as_int::ns;
+    exitSimLoop("m5 ROI End", 0, when, 0, true);
+}
+
 //
 // This function is executed when annotated work items begin.  Depending on
 // what the user specified at the command line, the simulation may exit and/or

@@ -38,7 +38,10 @@ RUN apt -y update && apt -y upgrade && \
     apt -y install build-essential git m4 scons zlib1g zlib1g-dev \
     libprotobuf-dev protobuf-compiler libprotoc-dev libgoogle-perftools-dev \
     python3-dev python-is-python3 doxygen libboost-all-dev \
-    libhdf5-serial-dev python3-pydot libpng-dev libelf-dev pkg-config
+    libhdf5-serial-dev python3-pydot libpng-dev libelf-dev pkg-config \
+    # For correct compilation of Hetero-Mark
+    libopencv-dev cmake
+
 RUN apt -y install wget
 
 # The follow were adapted from instructions at the URL below, accessed 4/12/24:
@@ -67,3 +70,15 @@ RUN apt update
 # This package should be the minimum needed to build and is significantly
 # smaller than the full `rocm` package.
 RUN apt -y install rocm-dev
+
+# Changes to configure properly the paths for HIP and CMake
+ENV HIP_PATH=/opt/rocm/
+ENV PATH="$HIP_PATH/bin:$PATH"
+ENV CMAKE_PREFIX_PATH="$HIP_PATH:$CMAKE_PREFIX_PATH"
+ENV LD_LIBRARY_PATH="$HIP_PATH/lib:$LD_LIBRARY_PATH"
+
+# Ensure the environment is available in interactive shells
+RUN echo "export HIP_PATH=/opt/rocm/" >> /etc/profile \
+    && echo "export PATH=\$HIP_PATH/bin:\$PATH" >> /etc/profile \
+    && echo "export CMAKE_PREFIX_PATH=\$HIP_PATH:\$CMAKE_PREFIX_PATH" >> /etc/profile \
+    && echo "export LD_LIBRARY_PATH=\$HIP_PATH/lib:\$LD_LIBRARY_PATH" >> /etc/profile

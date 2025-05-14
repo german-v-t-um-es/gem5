@@ -3,5 +3,12 @@
         "src/python",
         "ext",
         "tests"
-    ]
+    ],
+    "files.associations": {
+        "*.hip": "cpp",
+        "*.inc": "cpp",
+        "*.in": "cpp",
+        "bitset": "cpp",
+        "cmath": "cpp"
+    }
 }

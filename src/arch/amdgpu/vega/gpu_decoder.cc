@@ -72,10 +72,14 @@ namespace VegaISA
         &Decoder::decode_OP_VOP2__V_SUBREV_F32,
         &Decoder::decode_OP_VOP2__V_SUBREV_F32,
         &Decoder::decode_OP_VOP2__V_SUBREV_F32,
-        &Decoder::decode_OP_VOP2__V_MUL_LEGACY_F32,
-        &Decoder::decode_OP_VOP2__V_MUL_LEGACY_F32,
-        &Decoder::decode_OP_VOP2__V_MUL_LEGACY_F32,
-        &Decoder::decode_OP_VOP2__V_MUL_LEGACY_F32,
+        &Decoder::decode_OP_VOP2__V_FMAC_F64,
+        &Decoder::decode_OP_VOP2__V_FMAC_F64,
+        &Decoder::decode_OP_VOP2__V_FMAC_F64,
+        &Decoder::decode_OP_VOP2__V_FMAC_F64,
+        // &Decoder::decode_OP_VOP2__V_MUL_LEGACY_F32,
+        // &Decoder::decode_OP_VOP2__V_MUL_LEGACY_F32,
+        // &Decoder::decode_OP_VOP2__V_MUL_LEGACY_F32,
+        // &Decoder::decode_OP_VOP2__V_MUL_LEGACY_F32,
         &Decoder::decode_OP_VOP2__V_MUL_F32,
         &Decoder::decode_OP_VOP2__V_MUL_F32,
         &Decoder::decode_OP_VOP2__V_MUL_F32,
@@ -4205,6 +4209,12 @@ namespace VegaISA
     Decoder::decode_OP_VOP2__V_FMAC_F32(MachInst iFmt)
     {
         return new Inst_VOP2__V_FMAC_F32(&iFmt->iFmt_VOP2);
+    }
+
+    GPUStaticInst*
+    Decoder::decode_OP_VOP2__V_FMAC_F64(MachInst iFmt)
+    {
+        return new Inst_VOP2__V_FMAC_F64(&iFmt->iFmt_VOP2);
     }
 
     GPUStaticInst*

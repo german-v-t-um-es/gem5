@@ -8138,6 +8138,40 @@ namespace VegaISA
         void execute(GPUDynInstPtr) override;
     }; // Inst_VOP2__V_FMAC_F32
 
+    class Inst_VOP2__V_FMAC_F64 : public Inst_VOP2
+    {
+      public:
+        Inst_VOP2__V_FMAC_F64(InFmt_VOP2*);
+        ~Inst_VOP2__V_FMAC_F64();
+
+        int
+        getNumOperands() override
+        {
+            return numDstRegOperands() + numSrcRegOperands();
+        } // getNumOperands
+
+        int numDstRegOperands() override { return 1; }
+        int numSrcRegOperands() override { return 2; }
+
+        int
+        getOperandSize(int opIdx) override
+        {
+            switch (opIdx) {
+              case 0: //src_0
+                return 8;
+              case 1: //src_1
+                return 8;
+              case 2: //vdst
+                return 8;
+              default:
+                fatal("op idx %i out of bounds\n", opIdx);
+                return -1;
+            }
+        } // getOperandSize
+
+        void execute(GPUDynInstPtr) override;
+    }; // Inst_VOP2__V_FMAC_F64
+
     class Inst_VOP2__V_XNOR_B32 : public Inst_VOP2
     {
       public:
@@ -32242,6 +32276,8 @@ namespace VegaISA
         } // getOperandSize
 
         void execute(GPUDynInstPtr) override;
+        void initiateAcc(GPUDynInstPtr) override;
+        void completeAcc(GPUDynInstPtr) override;
     }; // Inst_DS__DS_ADD_RTN_U32
 
     class Inst_DS__DS_SUB_RTN_U32 : public Inst_DS
@@ -32769,15 +32805,18 @@ namespace VegaISA
         int numDstRegOperands() override { return 1; }
         int numSrcRegOperands() override { return 3; }
 
+        // TODO German
         int
         getOperandSize(int opIdx) override
         {
             switch (opIdx) {
-              case 0: //vgpr_a
+              case 0: // vdst
                 return 4;
-              case 1: //vgpr_d1
+              case 1: // vaddr
                 return 4;
-              case 2: //vgpr_rtn
+              case 2: // vdata0
+                return 4;
+              case 3: // vdata1
                 return 4;
               default:
                 fatal("op idx %i out of bounds\n", opIdx);
@@ -32786,6 +32825,8 @@ namespace VegaISA
         } // getOperandSize
 
         void execute(GPUDynInstPtr) override;
+        void initiateAcc(GPUDynInstPtr) override;
+        void completeAcc(GPUDynInstPtr) override;
     }; // Inst_DS__DS_CMPST_RTN_B32
 
     class Inst_DS__DS_CMPST_RTN_F32 : public Inst_DS
